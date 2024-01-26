@@ -68,7 +68,6 @@ addObject o rm
    checked with 'objectHere') -}
 
 findObj :: String -> [Object] -> Object
-findObj 
 findObj name (o:os)
    | obj_name o == name = o
    | otherwise = findObj name os
