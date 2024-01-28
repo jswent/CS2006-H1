@@ -123,6 +123,7 @@ removeInv gd obj =
 carrying :: GameData -> String -> Bool
 carrying gd obj = any (\object -> obj_name object == obj) (inventory gd)
 
+
 {-
 Define the "go" action. Given a direction and a game state, update the game
 state with the new location. If there is no exit that way, report an error.
