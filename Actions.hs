@@ -73,10 +73,8 @@ findObj o os = head $ filter (\obj -> obj_name obj == o) os
 
 {- Use 'findObj' to find an object in a room description -}
 
-objectData :: String -> Room -> Maybe Object
-objectData o rm
-   | objectHere o rm = Just $ findObj o (objects rm)
-   | otherwise = Nothing
+objectData :: String -> Room -> Object
+objectData o rm = findObj o (objects rm)
 
 {- Given a game state and a room id, replace the old room information with
    new data. If the room id does not already exist, add it. -}
@@ -89,23 +87,41 @@ updateRoom gd rmid rmdata =
          then world gd 
          else (rmid, rmdata) : world gd}
 
+getRoom :: String -> GameData -> Room
+getRoom rmid gd = 
+   let 
+      rooms = world gd
+   in 
+      snd $ head $ filter (\room -> fst room == rmid) rooms
+
 {- Given a game state and an object id, find the object in the current
    room and add it to the player's inventory -}
 
 addInv :: GameData -> String -> GameData
-addInv gd obj = undefined
+addInv gd obj = 
+   let
+      room = getRoom (location_id gd) gd
+      object = if objectHere obj room then [objectData obj room] else []
+   in (
+      gd {
+         inventory = inventory gd ++ object
+      }
+   )
 
 {- Given a game state and an object id, remove the object from the
    inventory. Hint: use filter to check if something should still be in
    the inventory. -}
 
 removeInv :: GameData -> String -> GameData
-removeInv gd obj = undefined
+removeInv gd obj = 
+   gd {
+      inventory = filter (\object -> obj_name object /= obj) (inventory gd)
+   }
 
 {- Does the inventory in the game state contain the given object? -}
 
 carrying :: GameData -> String -> Bool
-carrying gd obj = undefined
+carrying gd obj = any (\object -> obj_name object == obj) (inventory gd)
 
 {-
 Define the "go" action. Given a direction and a game state, update the game
