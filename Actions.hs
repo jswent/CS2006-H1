@@ -80,12 +80,18 @@ objectData o rm = findObj o (objects rm)
    new data. If the room id does not already exist, add it. -}
 
 updateRoom :: GameData -> String -> Room -> GameData
-updateRoom gd rmid rmdata =
-   gd {location_id = rmid,
-      world = 
-         if (elem (rmid, rmdata) (world gd)) 
-         then world gd 
-         else (rmid, rmdata) : world gd}
+updateRoom gd rmid rmdata
+   | length roomArr == 0 = gd {world = (rmid, rmdata) : world gd}
+   | otherwise = 
+      let newWorld = map (\tuple -> if (fst tuple) == rmid then (rmid, rmdata) else tuple) (world gd)
+      in (
+         gd {
+            world = newWorld
+         }
+      )
+   where
+      roomArr = filter (\roomTuple -> fst roomTuple == rmid) (world gd)
+
 
 getRoom :: String -> GameData -> Room
 getRoom rmid gd = 
@@ -137,7 +143,20 @@ e.g.
 -}
 
 go :: Action
-go dir state = undefined
+go dir state =
+   if newRmMybeStr == Nothing then (state, "No room in that direction.")
+   else 
+      (newState, "OK")
+   where
+      currentRm = getRoom (location_id state) state
+      newRmMybeStr = move dir currentRm
+      newRmStr = case newRmMybeStr of
+         Nothing  -> ""
+         Just val -> val
+      newState = state {
+         location_id = newRmStr
+      }
+
 
 {- Remove an item from the current room, and put it in the player's inventory.
    This should only work if the object is in the current room. Use 'objectHere'
@@ -152,7 +171,13 @@ go dir state = undefined
 -}
 
 get :: Action
-get obj state = undefined
+get obj state
+   | objectHere obj room = (newState, "Item picked up successfully")
+   | otherwise = (state, "Item not in room")
+   where 
+      room = getRoom (location_id state) state
+      newRoom = removeObject obj room
+      newState = updateRoom (addInv state obj) (location_id state) newRoom
 
 {- Remove an item from the player's inventory, and put it in the current room.
    Similar to 'get' but in reverse - find the object in the inventory, create
@@ -160,14 +185,29 @@ get obj state = undefined
 -}
 
 put :: Action
-put obj state = undefined
+put obj state 
+   | carrying state obj = (newState, "Item put down successfully")
+   | otherwise = (state, "Item not in inventory")
+   where 
+      room = getRoom (location_id state) state
+      object = findObj obj (inventory state)
+      newRoom = addObject object room
+      newState = updateRoom (removeInv state obj) (location_id state) newRoom
 
 {- Don't update the state, just return a message giving the full description
    of the object. As long as it's either in the room or the player's 
    inventory! -}
 
 examine :: Action
-examine obj state = undefined
+examine obj state 
+   | objectHere obj rm || carrying state obj =  
+      (state, obj_longname object ++ ": " ++ obj_desc object)
+   where
+      rm = getRoom (location_id state) state
+      object = if objectHere obj rm 
+               then objectData obj rm
+               else findObj obj (inventory state)
+
 
 {- Pour the coffee. Obviously, this should only work if the player is carrying
    both the pot and the mug. This should update the status of the "mug"
@@ -175,7 +215,12 @@ examine obj state = undefined
 -}
 
 pour :: Action
-pour obj state = undefined
+pour obj state
+   | carrying state "coffee" && carrying state "mug" = (newState, "Coffee mug is now full and ready to drink")
+   | otherwise = (state, "Cannot pour coffee until you have both the coffee pot and a mug in your inventory")
+   where
+      newInventory = fullmug : (filter (\object -> obj_name object /= "mug") (inventory state))
+      newState = state { inventory = newInventory }
 
 {- Drink the coffee. This should only work if the player has a full coffee 
    mug! Doing this is required to be allowed to open the door. Once it is
