@@ -1,31 +1,32 @@
 module World where
 
-data Object = Obj { obj_name :: String,
-                    obj_longname :: String,
-                    obj_desc :: String }
+data Object = Obj { obj_name :: String,      -- The short name of the object
+                    obj_longname :: String,  -- The long name of the object
+                    obj_desc :: String }     -- A description of the object
    deriving Eq
 
 instance Show Object where
    show obj = obj_longname obj
 
-data Exit = Exit { exit_dir :: String,
-                   exit_desc :: String,
-                   room :: String }
+data Exit = Exit { exit_dir :: String,   -- The direction of the exit relative to the player's position in the room
+                   exit_desc :: String,  -- A description of the exit route
+                   room :: String }      -- The name of the room to which the exit leads
    deriving Eq
 
-data Room = Room { room_desc :: String,
-                   exits :: [Exit],
-                   objects :: [Object] }
+data Room = Room { room_desc :: String,   -- The name of the room / description of its purpose
+                   exits :: [Exit],       -- The exit routes from the current room to another, if applicable
+                   objects :: [Object] }  -- The objects contained within the current room
    deriving Eq
 
-data GameData = GameData { location_id :: String, -- where player is
-                           world :: [(String, Room)],
-                           inventory :: [Object], -- objects player has
-                           poured :: Bool, -- coffee is poured
-                           caffeinated :: Bool, -- coffee is drunk
-                           finished :: Bool -- set to True at the end
+data GameData = GameData { location_id :: String,      -- where player is
+                           world :: [(String, Room)],  -- all possible locations
+                           inventory :: [Object],      -- objects player has
+                           poured :: Bool,             -- coffee is poured
+                           caffeinated :: Bool,        -- coffee is drunk
+                           finished :: Bool             -- set to True at the end
                          }
 
+{-- Check if the player has won (i.e. if their current location is the "street") --}
 won :: GameData -> Bool
 won gd = location_id gd == "street"
 
@@ -77,15 +78,16 @@ street = Room "You have made it out of the house."
               [Exit "in" "You can go back inside if you like. " "hall"]
               []
 
+{-- A list of all possible environments that the player could find themselves in --}
 gameworld = [("bedroom", bedroom),
              ("kitchen", kitchen),
              ("hall", hall),
              ("street", street)]
 
+{-- Sets the initial values for the game's state and returns a GameData object representation --}
 initState :: GameData
 initState = GameData "bedroom" gameworld [] False False False
 
-{- Return the room the player is currently in. -}
-
+{- Return the room the player is currently in -}
 getRoomData :: GameData -> Room
 getRoomData gd = maybe undefined id (lookup (location_id gd) (world gd))

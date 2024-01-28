@@ -2,6 +2,7 @@ module Actions where
 
 import World
 
+{-- Function that returns an Action based on user input --}
 actions :: String -> Maybe Action
 actions "go"      = Just go
 actions "get"     = Just get
@@ -12,6 +13,7 @@ actions "drink"   = Just drink
 actions "open"    = Just open
 actions _         = Nothing
 
+{-- Function that returns a Command based on user input --}
 commands :: String -> Maybe Command
 commands "quit"      = Just quit
 commands "inventory" = Just inv
@@ -29,6 +31,33 @@ Just "kitchen"
 Nothing
 -}
 
+{-- An alternative to "head", which will return the first element in 
+   a list if applicable, but instead of throwing an error when an 
+      empty list is passed in Nothing will be returned.--}
+safeHead :: [a] -> Maybe a
+safeHead []       = Nothing
+safeHead (x : xs) = Just x
+
+{-- Take a String representing a direction and return the opposite direction --}
+opposite :: String -> Maybe String
+opposite "north" = Just "south"
+opposite "east"  = Just "west"
+opposite "south" = Just "north"
+opposite "west"  = Just "east"
+opposite _       = Nothing
+
+{-- 
+   Takes a direction and the current room.
+
+   Recurse through the "exit" values for the current room and search for an exit 
+   in the same direction as the user wishes to move.
+
+   If the room contains an exit which is in the specified direction, return this as a
+   wrapped value. 
+   
+   If no exit exists from the current room in the user's chosen direction,
+   the function will evaluate to Nothing.
+ --}
 move :: String -> Room -> Maybe String
 move dir (Room _ [] _) = Nothing
 move dir (Room a (exit:exits) b)
