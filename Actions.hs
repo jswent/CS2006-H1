@@ -41,12 +41,12 @@ safeHead []       = Nothing
 safeHead (x : xs) = Just x
 
 {-- Take a String representing a direction and return the opposite direction --}
-opposite :: String -> Maybe String
-opposite "north" = Just "south"
-opposite "east"  = Just "west"
-opposite "south" = Just "north"
-opposite "west"  = Just "east"
-opposite _       = Nothing
+opposite :: Direction -> Maybe Direction
+opposite North = Just South
+opposite East  = Just West
+opposite South = Just North
+opposite West  = Just East
+-- opposite _      = Nothing
 
 {-- 
    Takes a direction and the current room.
@@ -138,7 +138,8 @@ addInv :: GameData -> String -> GameData
 addInv gd obj = 
    let
       room = getRoom (location_id gd) gd
-      object = if objectHere obj room then [objectData obj room] else []
+      object | objectHere obj room = [objectData obj room]
+             | otherwise           = []
    in (
       gd {
          inventory = inventory gd ++ object
