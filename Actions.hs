@@ -31,9 +31,11 @@ Just "kitchen"
 Nothing
 -}
 
-{-- An alternative to "head", which will return the first element in 
+{-- 
+   An alternative to "head", which will return the first element in 
    a list if applicable, but instead of throwing an error when an 
-      empty list is passed in Nothing will be returned.--}
+      empty list is passed in Nothing will be returned
+--}
 safeHead :: [a] -> Maybe a
 safeHead []       = Nothing
 safeHead (x : xs) = Just x
