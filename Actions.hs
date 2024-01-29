@@ -129,7 +129,6 @@ removeInv gd obj =
 carrying :: GameData -> String -> Bool
 carrying gd obj = any (\object -> obj_name object == obj) (inventory gd)
 
-
 {-
 Define the "go" action. Given a direction and a game state, update the game
 state with the new location. If there is no exit that way, report an error.
@@ -216,11 +215,15 @@ examine obj state
 
 pour :: Action
 pour obj state
-   | carrying state "coffee" && carrying state "mug" = (newState, "Coffee mug is now full and ready to drink")
+   | carrying state "coffee" && carrying state "mug" && not (poured state)= (newState, "Coffee mug is now full and ready to drink")
+   | carrying state "coffee" && carrying state "mug" = (state, "Coffee mug is already full and ready to drink")
    | otherwise = (state, "Cannot pour coffee until you have both the coffee pot and a mug in your inventory")
    where
       newInventory = fullmug : (filter (\object -> obj_name object /= "mug") (inventory state))
-      newState = state { inventory = newInventory }
+      newState = state { 
+         inventory = newInventory,
+         poured = True
+      }
 
 {- Drink the coffee. This should only work if the player has a full coffee 
    mug! Doing this is required to be allowed to open the door. Once it is
@@ -230,7 +233,17 @@ pour obj state
 -}
 
 drink :: Action
-drink obj state = undefined
+drink obj state
+   | carrying state "mug" && (poured state) = (newState, "Coffee has been drunk and you are now caffeinated")
+   | otherwise = (state, "To drink the coffee you must have a full mug of coffee in your inventory")
+   where
+      newInventory = mug : (filter (\object -> obj_name object /= "mug") (inventory state))
+      newState = state { 
+         inventory = newInventory,
+         caffeinated = True,
+         poured = False
+      }
+
 
 {- Open the door. Only allowed if the player has had coffee! 
    This should change the description of the hall to say that the door is open,
@@ -241,7 +254,16 @@ drink obj state = undefined
 -}
 
 open :: Action
-open obj state = undefined
+open obj state --must be in hall
+   | caffeinated state && (location_id state) == "hall" = (newState, "Door has been opened to the street!")
+   | otherwise = (state, "You are too sleepy. To open the door you must have drunk a mug of coffee.")
+   where
+      newHall = hall {
+         room_desc = openedhall,
+         exits = openedexits }
+      newState = (updateRoom state "hall" newHall)
+      
+
 
 {- Don't update the game state, just list what the player is carrying -}
 
