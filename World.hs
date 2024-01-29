@@ -6,10 +6,10 @@ module World where
 data Object = Obj { obj_name :: String,      -- The short name of the object
                     obj_longname :: String,  -- The long name of the object
                     obj_desc :: String }     -- A description of the object
-   deriving Eq
+    deriving (Eq)
 
 instance Show Object where
-   show obj = obj_longname obj
+    show obj = obj_longname obj
 
 mug, fullmug, coffeepot :: Object
 mug       = Obj "mug" "a coffee mug" "A coffee mug"
@@ -20,10 +20,17 @@ coffeepot = Obj "coffee" "a pot of coffee" "A pot containing freshly brewed coff
 
 
 {-- Room --}
-data Room = Room { room_desc :: String,   -- The name of the room / description of its purpose
-                   exits :: [Exit],       -- The exit routes from the current room to another, if applicable
-                   objects :: [Object] }  -- The objects contained within the current room
-   deriving Eq
+data Room = Room {  -- room_type :: RoomType,
+                    room_desc :: String,   -- The name of the room / description of its purpose
+                    exits :: [Exit],       -- The exit routes from the current room to another, if applicable
+                    objects :: [Object] }  -- The objects contained within the current room
+    deriving (Eq)
+
+data RoomType = Bedroom 
+              | Kitchen 
+              | Hall 
+              | Street
+    deriving (Eq, Show)
 
 instance Show Room where
     show (Room desc exits objs) = desc ++ "\n" ++ concatMap exit_desc exits ++
@@ -35,16 +42,19 @@ instance Show Room where
 
 bedroom, kitchen, hall, street :: Room
 
-bedroom = Room "You are in your bedroom."
+bedroom = Room -- Bedroom
+                "You are in your bedroom."
                [Exit "north" "To the north is a kitchen. " "kitchen"]
                [mug]
 
-kitchen = Room "You are in the kitchen."
+kitchen = Room -- Kitchen
+                "You are in the kitchen."
                [Exit "south" "To the south is your bedroom. " "bedroom",
                 Exit "west" "To the west is a hallway. " "hall"]
                [coffeepot]
 
-hall = Room "You are in the hallway. The front door is closed. "
+hall = Room -- Hall
+            "You are in the hallway. The front door is closed. "
             [Exit "east" "To the east is a kitchen. " "kitchen"]
             []
 
@@ -53,7 +63,8 @@ openedhall = "You are in the hallway. The front door is open. "
 openedexits = [Exit "east" "To the east is a kitchen. " "kitchen",
                Exit "out" "You can go outside. " "street"]
 
-street = Room "You have made it out of the house."
+street = Room -- Street
+              "You have made it out of the house."
               [Exit "in" "You can go back inside if you like. " "hall"]
               []
 
@@ -70,7 +81,7 @@ gameworld = [("bedroom", bedroom),
 data Exit = Exit { exit_dir :: String,   -- The direction of the exit relative to the player's position in the room
                    exit_desc :: String,  -- A description of the exit route
                    room :: String }      -- The name of the room to which the exit leads
-   deriving Eq
+    deriving (Eq)
 
 
 
@@ -109,5 +120,26 @@ type Action  = String -> GameData -> (GameData, String)
 type Command = GameData -> (GameData, String)
 
 {-- An enumeration type to describe the direction of movement relative to the current position --}
-data Direction = North | East | South | West
+data Direction = North 
+               | East 
+               | South 
+               | West
+
+{-- 
+data Command a = (Action a)
+                | Quit
+                | Inventory
+                | Nothing
+--}
+
+{--
+data Action a = Go (Direction a) 
+                | Get (Object a)
+                | Pour (Object a)
+                | Drop (Object a)
+                | Examine (Object a)
+                | Drink (Object a)
+                | Open (Object a)
+                | Nothing 
+--}
 

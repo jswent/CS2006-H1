@@ -41,12 +41,11 @@ safeHead []       = Nothing
 safeHead (x : xs) = Just x
 
 {-- Take a String representing a direction and return the opposite direction --}
-opposite :: Direction -> Maybe Direction
-opposite North = Just South
-opposite East  = Just West
-opposite South = Just North
-opposite West  = Just East
--- opposite _      = Nothing
+opposite :: Direction -> Direction
+opposite North = South
+opposite East  = West
+opposite South = North
+opposite West  = East
 
 {-- 
    Takes a direction and the current room.
