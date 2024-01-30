@@ -1,30 +1,42 @@
 module World where
 
 
+{-- GameData --}
+data GameData = GameData { location_id :: RoomType,      -- where player is
+                           world :: [(String, Room)],  -- all possible locations
+                           inventory :: [Object],      -- objects player has
+                           poured :: Bool,             -- coffee is poured
+                           caffeinated :: Bool,        -- coffee is drunk
+                           finished :: Bool             -- set to True at the end
+                         }
+
 
 {-- Object --}
-data Object = Obj { obj_name :: ObjectType,  -- The short name of the object
+data Object = Obj { obj_name :: ObjectType,  -- The short name of the object (also its type)
                     obj_longname :: String,  -- The long name of the object
                     obj_desc :: String }     -- A description of the object
     deriving (Eq)
 
+data ObjectType = Mug | FullMug | CoffeePot 
+    deriving (Eq)
 {--
 
     Alternate Object definition:
 
-    data Object = Mug { obj_name :: ObjectType,
+    data Object = Mug { obj_name :: String,
                     obj_longname :: String,
                     obj_desc :: String }
-                | FullMug { obj_name :: ObjectType,
+                | FullMug { obj_name :: String,
                     obj_longname :: String,
                     obj_desc :: String }
-                | CoffeePot { obj_name :: ObjectType,
+                | CoffeePot { obj_name :: String,
                     obj_longname :: String,
                     obj_desc :: String }
     deriving (Eq)
 
     This would obviously increase code repetition, but would avoid the hassles
     of having multiple types to describe different variations of objects.
+    Pattern matching would be used as opposed to String comparison
 --}
 
 instance Show Object where
@@ -36,8 +48,6 @@ instance Show Object where
 --              | otherwise                = False
 --     (==) _ _ = False
 
-data ObjectType = Mug | FullMug | CoffeePot 
-    deriving (Eq)
 
 mug, fullmug, coffeepot :: Object
 mug       = Obj Mug "a coffee mug" "A coffee mug"
@@ -115,29 +125,21 @@ data Exit = Exit { exit_dir :: Direction,   -- The direction of the exit relativ
 
 
 
-{-- GameData --}
-data GameData = GameData { location_id :: String,      -- where player is
-                           world :: [(String, Room)],  -- all possible locations
-                           inventory :: [Object],      -- objects player has
-                           poured :: Bool,             -- coffee is poured
-                           caffeinated :: Bool,        -- coffee is drunk
-                           finished :: Bool             -- set to True at the end
-                         }
 
 instance Show GameData where
-    show gd = show (getRoomData gd)
+    show game_data = show (getRoomData game_data)
 
 {-- Check if the player has won (i.e. if their current location is the "street") --}
 won :: GameData -> Bool
-won gd = location_id gd == "street"
+won game_data = location_id game_data == Street
 
 {-- Sets the initial values for the game's state and returns a GameData object representation --}
 initState :: GameData
-initState = GameData "bedroom" gameworld [] False False False
+initState = GameData Bedroom gameworld [] False False False
 
 {- Return the room the player is currently in -}
 getRoomData :: GameData -> Room
-getRoomData gd = maybe undefined id (lookup (location_id gd) (world gd))
+getRoomData game_data = maybe undefined id (lookup (location_id game_data) (world game_data))
 
 
 
