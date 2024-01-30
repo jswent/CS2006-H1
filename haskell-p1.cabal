@@ -6,11 +6,11 @@ cabal-version:       >=1.10
 
 name:                Haskell-P1
 version:             0.1.0.0
-author:              Your Name
-maintainer:          Your Email Address
+author:              220018336
+maintainer:          rp218@st-andrews.ac.uk
 build-type:          Simple
 
-executable game.exe
+executable haskell-p1
   main-is:             Adventure.hs
   other-modules:       Actions World
   build-depends:       base >=4.14 && <4.15

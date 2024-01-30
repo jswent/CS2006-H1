@@ -10,6 +10,7 @@ actions "pour"    = Just pour
 actions "examine" = Just examine
 actions "drink"   = Just drink
 actions "open"    = Just open
+actions "press"   = Just press
 actions _         = Nothing
 
 commands :: String -> Maybe Command
@@ -145,7 +146,7 @@ go :: Action
 go dir state =
    if newRmMybeStr == Nothing then (state, "No room in that direction.")
    else 
-      (newState, "OK")
+      (newState, "Successfully moved " ++ dir)
    where
       currentRm = getRoom (location_id state) state
       newRmMybeStr = move dir currentRm
@@ -262,6 +263,15 @@ open obj state --must be in hall
          room_desc = openedhall,
          exits = openedexits }
       newState = (updateRoom state "hall" newHall)
+
+
+{- Press the light switch. Only allowed when player is in the lounge
+   This will allow players to see where they are going-}
+
+press :: Action
+press obj state
+   | (location_id state) == "lounge" = (state {light = True}, "Light is switched on.")
+   | otherwise = (state, "To turn on the light you must be in the lounge.")
       
 
 
