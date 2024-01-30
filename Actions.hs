@@ -4,20 +4,52 @@ import World
 
 {-- Function that returns an Action based on user input --}
 actions :: String -> Maybe Action
-actions "go"      = Just go
-actions "get"     = Just get
-actions "drop"    = Just put
-actions "pour"    = Just pour
-actions "examine" = Just examine
-actions "drink"   = Just drink
-actions "open"    = Just open
+actions "go"      = Just Go
+actions "get"     = Just Get
+actions "drop"    = Just Put
+actions "pour"    = Just Pour
+actions "examine" = Just Examine
+actions "drink"   = Just Drink
+actions "open"    = Just Open
 actions _         = Nothing
 
 {-- Function that returns a Command based on user input --}
 commands :: String -> Maybe Command
-commands "quit"      = Just quit
-commands "inventory" = Just inv
+commands "quit"      = Just Quit
+commands "inventory" = Just Inventory
 commands _           = Nothing
+
+{-- Take a String and convert it to the associated Direction type, if applicable --}
+directions :: String -> Maybe Direction
+directions "north" = Just North
+directions "east"  = Just East
+directions "south" = Just South
+directions "west"  = Just West
+directions "in"    = Just In
+directions "out"   = Just Out
+directions _       = Nothing
+
+{--
+   Take a Direction and return the opposite direction.
+   The catch-all branch is not needed here, as any other input would create
+      a compiler error.   
+--}
+opposite :: Direction -> Maybe Direction
+opposite North   = Just South
+opposite East    = Just West
+opposite South   = Just North
+opposite West    = Just East
+opposite Out     = Just In
+opposite In      = Just Out
+
+{-- 
+   An alternative to "head", which will return the first element in 
+   a list if applicable, but instead of throwing an error when an 
+      empty list is passed in Nothing will be returned
+--}
+safeHead :: [a] -> Maybe a
+safeHead []       = Nothing
+safeHead (x : xs) = Just x
 
 {- Given a direction and a room to move from, return the room id in
    that direction, if it exists.
@@ -32,23 +64,7 @@ Nothing
 -}
 
 {-- 
-   An alternative to "head", which will return the first element in 
-   a list if applicable, but instead of throwing an error when an 
-      empty list is passed in Nothing will be returned
---}
-safeHead :: [a] -> Maybe a
-safeHead []       = Nothing
-safeHead (x : xs) = Just x
-
-{-- Take a String representing a direction and return the opposite direction --}
-opposite :: Direction -> Direction
-opposite North = South
-opposite East  = West
-opposite South = North
-opposite West  = East
-
-{-- 
-   Takes a direction and the current room.
+   Takes a Direction and the CURRENT room.
 
    Recurse through the "exit" values for the current room and search for an exit 
    in the same direction as the user wishes to move.
@@ -58,25 +74,23 @@ opposite West  = East
    
    If no exit exists from the current room in the user's chosen direction,
    the function will evaluate to Nothing.
- --}
-move :: String -> Room -> Maybe String
-move dir (Room _ [] _) = Nothing
-move dir (Room a (exit:exits) b)
-   | exit_dir exit == dir = Just $ room exit
-   | otherwise = move dir (Room a exits b)
+--}
+move :: Direction -> Room -> Maybe RoomType
+move direction (Room _         _ []           _) = Nothing
+move direction (Room room_type a (exit:exits) b) | exit_dir exit == direction = Just $ room exit
+                                                 | otherwise                  = move direction (Room room_type a exits b)
+
 
 {- Return True if the object appears in the room. -}
+objectHere :: ObjectType -> Room -> Bool
+objectHere o (Room _         _ _ []              ) = False
+objectHere o (Room room_type a b (object:objects)) | obj_name object == o = True
+                                                   | otherwise            = objectHere o (Room room_type a b objects)
 
-objectHere :: String -> Room -> Bool
-objectHere o (Room _ _ []) = False
-objectHere o (Room a b (object:objects)) 
-   | obj_name object == o = True
-   | otherwise = objectHere o (Room a b objects)
 
 {- Given an object id and a room description, return a new room description
    without that object -}
-
-removeObject :: String -> Room -> Room
+removeObject :: ObjectType -> Room -> Room
 removeObject o rm = 
    let 
       objs = objects rm
@@ -84,81 +98,72 @@ removeObject o rm =
    in (
         rm {objects = new_objs})
 
+
 {- Given an object and a room description, return a new room description
    with that object added -}
-
 addObject :: Object -> Room -> Room
-addObject o rm
-   | objectHere (obj_name o) rm = rm
-   | otherwise = let new_objs = (objects rm) ++ [o]
-      in (rm {objects = new_objs})
+addObject new_object room
+   | objectHere (obj_name new_object) room = room
+   | otherwise                             = let new_objects = (objects room) ++ [new_object]
+                                             in (room {objects = new_objects})
 
-{- Given an object id and a list of objects, return the object data. Note
+{-- 
+   Given an object id and a list of objects, return the object data. Note
    that you can assume the object is in the list (i.e. that you have
-   checked with 'objectHere') -}
+   checked with 'objectHere') 
+   
+   --Rory - Head is safe to use here as we can assume object is present in list
+--}
+findObj :: ObjectType -> [Object] -> Object
+findObj target_object objects = head $ filter (\obj -> obj_name obj == target_object) objects
 
---Rory - Head is safe to use here as we can assume object is present in list
-findObj :: String -> [Object] -> Object
-findObj o os = head $ filter (\obj -> obj_name obj == o) os
 
 {- Use 'findObj' to find an object in a room description -}
-
 objectData :: String -> Room -> Object
 objectData o rm = findObj o (objects rm)
 
+
 {- Given a game state and a room id, replace the old room information with
    new data. If the room id does not already exist, add it. -}
-
 updateRoom :: GameData -> String -> Room -> GameData
 updateRoom gd rmid rmdata
    | length roomArr == 0 = gd {world = (rmid, rmdata) : world gd}
-   | otherwise = 
-      let newWorld = map (\tuple -> if (fst tuple) == rmid then (rmid, rmdata) else tuple) (world gd)
-      in (
-         gd {
-            world = newWorld
-         }
-      )
+   | otherwise           = let newWorld = map (\tuple -> if (fst tuple) == rmid then (rmid, rmdata) else tuple) (world gd)
+                           in ( gd { world = newWorld } )
    where
       roomArr = filter (\roomTuple -> fst roomTuple == rmid) (world gd)
 
 
 getRoom :: String -> GameData -> Room
-getRoom rmid gd = 
+getRoom room_id game_data = 
    let 
-      rooms = world gd
+      rooms = world game_data
    in 
-      snd $ head $ filter (\room -> fst room == rmid) rooms
+      snd $ head $ filter (\room -> fst room == room_id) rooms
 
 {- Given a game state and an object id, find the object in the current
    room and add it to the player's inventory -}
-
-addInv :: GameData -> String -> GameData
-addInv gd obj = 
+-- NOT REFACTORED --
+addInv :: GameData -> Object -> GameData
+addInv game_data object = 
    let
-      room = getRoom (location_id gd) gd
-      object | objectHere obj room = [objectData obj room]
+      room = getRoom (location_id game_data) game_data
+      object | objectHere object room = [objectData object room]
              | otherwise           = []
-   in (
-      gd {
-         inventory = inventory gd ++ object
-      }
-   )
+   in ( gd { inventory = inventory game_data ++ object } )
 
 {- Given a game state and an object id, remove the object from the
    inventory. Hint: use filter to check if something should still be in
    the inventory. -}
-
-removeInv :: GameData -> String -> GameData
+-- NOT REFACTORED --
+removeInv :: GameData -> Object -> GameData
 removeInv gd obj = 
-   gd {
-      inventory = filter (\object -> obj_name object /= obj) (inventory gd)
-   }
+   gd { inventory = filter (\object -> obj_name object /= obj) (inventory gd) }
 
 {- Does the inventory in the game state contain the given object? -}
-
-carrying :: GameData -> String -> Bool
-carrying gd obj = any (\object -> obj_name object == obj) (inventory gd)
+-- REFACTOR COMPLETE --
+carrying :: GameData -> Object -> Bool
+carrying game_data user_object = any (\obj -> obj_name obj == obj_name user_object) (inventory game_data)
 
 {-
 Define the "go" action. Given a direction and a game state, update the game
@@ -171,21 +176,19 @@ e.g.
 (kitchen,"OK")
 
 -}
-
-go :: Action
-go dir state =
-   if newRmMybeStr == Nothing then (state, "No room in that direction.")
-   else 
-      (newState, "OK")
-   where
-      currentRm = getRoom (location_id state) state
-      newRmMybeStr = move dir currentRm
-      newRmStr = case newRmMybeStr of
-         Nothing  -> ""
-         Just val -> val
-      newState = state {
-         location_id = newRmStr
-      }
+-- REFACTOR NOT COMPLETE --
+go :: Direction -> GameData -> (GameData, ReturnValue)
+go direction state | (newRoomMaybeStr == Nothing) = (state, "No room in that direction.")
+                   | otherwise                    = (newState, "OK")
+                  where
+                     currentRoom = getRoom (location_id state) state
+                     newRoomMaybeStr = move direction currentRoom
+                     newRoomStr = case newRoomMaybeStr of
+                        Nothing    -> ""
+                        Just value -> value -- Value is a String but RoomType is being returned
+                     newState = state {
+                        location_id = newRoomStr
+                     }
 
 
 {- Remove an item from the current room, and put it in the player's inventory.
@@ -217,7 +220,7 @@ get obj state
 put :: Action
 put obj state 
    | carrying state obj = (newState, "Item put down successfully")
-   | otherwise = (state, "Item not in inventory")
+   | otherwise          = (state, "Item not in inventory")
    where 
       room = getRoom (location_id state) state
       object = findObj obj (inventory state)
@@ -266,7 +269,7 @@ pour obj state
 drink :: Action
 drink obj state
    | carrying state "mug" && (poured state) = (newState, "Coffee has been drunk and you are now caffeinated")
-   | otherwise = (state, "To drink the coffee you must have a full mug of coffee in your inventory")
+   | otherwise                              = (state, "To drink the coffee you must have a full mug of coffee in your inventory")
    where
       newInventory = mug : (filter (\object -> obj_name object /= "mug") (inventory state))
       newState = state { 
@@ -287,11 +290,10 @@ drink obj state
 open :: Action
 open obj state --must be in hall
    | caffeinated state && (location_id state) == "hall" = (newState, "Door has been opened to the street!")
-   | otherwise = (state, "You are too sleepy. To open the door you must have drunk a mug of coffee.")
+   | otherwise                                          = (state, "You are too sleepy. To open the door you must have drunk a mug of coffee.")
    where
-      newHall = hall {
-         room_desc = openedhall,
-         exits = openedexits }
+      newHall = hall {  room_desc = openedhall,
+                        exits = openedexits }
       newState = (updateRoom state "hall" newHall)
       
 

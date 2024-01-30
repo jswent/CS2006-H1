@@ -3,24 +3,52 @@ module World where
 
 
 {-- Object --}
-data Object = Obj { obj_name :: String,      -- The short name of the object
+data Object = Obj { obj_name :: ObjectType,  -- The short name of the object
                     obj_longname :: String,  -- The long name of the object
                     obj_desc :: String }     -- A description of the object
     deriving (Eq)
 
+{--
+
+    Alternate Object definition:
+
+    data Object = Mug { obj_name :: ObjectType,
+                    obj_longname :: String,
+                    obj_desc :: String }
+                | FullMug { obj_name :: ObjectType,
+                    obj_longname :: String,
+                    obj_desc :: String }
+                | CoffeePot { obj_name :: ObjectType,
+                    obj_longname :: String,
+                    obj_desc :: String }
+    deriving (Eq)
+
+    This would obviously increase code repetition, but would avoid the hassles
+    of having multiple types to describe different variations of objects.
+--}
+
 instance Show Object where
     show obj = obj_longname obj
 
+-- Potential addition once fixed
+-- instance Eq Object where
+--     (==) a b | obj_name a == obj_name b = True
+--              | otherwise                = False
+--     (==) _ _ = False
+
+data ObjectType = Mug | FullMug | CoffeePot 
+    deriving (Eq)
+
 mug, fullmug, coffeepot :: Object
-mug       = Obj "mug" "a coffee mug" "A coffee mug"
-fullmug   = Obj "mug" "a full coffee mug" "A coffee mug containing freshly brewed coffee"
-coffeepot = Obj "coffee" "a pot of coffee" "A pot containing freshly brewed coffee"
+mug       = Obj Mug "a coffee mug" "A coffee mug"
+fullmug   = Obj FullMug "a full coffee mug" "A coffee mug containing freshly brewed coffee"
+coffeepot = Obj CoffeePot "a pot of coffee" "A pot containing freshly brewed coffee"
 
 
 
 
 {-- Room --}
-data Room = Room {  -- room_type :: RoomType,
+data Room = Room {  room_name :: RoomType, -- 
                     room_desc :: String,   -- The name of the room / description of its purpose
                     exits :: [Exit],       -- The exit routes from the current room to another, if applicable
                     objects :: [Object] }  -- The objects contained within the current room
@@ -33,39 +61,40 @@ data RoomType = Bedroom
     deriving (Eq, Show)
 
 instance Show Room where
-    show (Room desc exits objs) = desc ++ "\n" ++ concatMap exit_desc exits ++
+    show (Room _ desc exits objs) = desc ++ "\n" ++ concatMap exit_desc exits ++
                                   showInv objs
        where showInv [] = ""
              showInv xs = "\n\nYou can see: " ++ showInv' xs
              showInv' [x] = show x
              showInv' (x:xs) = show x ++ ", " ++ showInv' xs
 
+{-- Room Constructors --}
 bedroom, kitchen, hall, street :: Room
 
-bedroom = Room -- Bedroom
-                "You are in your bedroom."
-               [Exit "north" "To the north is a kitchen. " "kitchen"]
+bedroom = Room Bedroom                                               -- RoomType
+                "You are in your bedroom."                           -- Room description
+               [Exit North "To the north is a kitchen. " Kitchen]  -- [Exit]
                [mug]
 
-kitchen = Room -- Kitchen
+kitchen = Room Kitchen
                 "You are in the kitchen."
-               [Exit "south" "To the south is your bedroom. " "bedroom",
-                Exit "west" "To the west is a hallway. " "hall"]
+               [Exit South "To the south is your bedroom. " Bedroom,
+                Exit West "To the west is a hallway. " Hall]
                [coffeepot]
 
-hall = Room -- Hall
+hall = Room Hall
             "You are in the hallway. The front door is closed. "
-            [Exit "east" "To the east is a kitchen. " "kitchen"]
+            [Exit East "To the east is a kitchen. " Kitchen]
             []
 
 {-- New data about the hall for when we open the door --}
 openedhall = "You are in the hallway. The front door is open. "
-openedexits = [Exit "east" "To the east is a kitchen. " "kitchen",
-               Exit "out" "You can go outside. " "street"]
+openedexits = [Exit East "To the east is a kitchen. " Kitchen,
+               Exit Out "You can go outside. " Street]
 
-street = Room -- Street
+street = Room Street
               "You have made it out of the house."
-              [Exit "in" "You can go back inside if you like. " "hall"]
+              [Exit In "You can go back inside if you like. " Hall]
               []
 
 {-- A list of all possible environments that the player could find themselves in --}
@@ -78,9 +107,9 @@ gameworld = [("bedroom", bedroom),
 
 
 {-- Exit --}
-data Exit = Exit { exit_dir :: String,   -- The direction of the exit relative to the player's position in the room
+data Exit = Exit { exit_dir :: Direction,   -- The direction of the exit relative to the player's position in the room
                    exit_desc :: String,  -- A description of the exit route
-                   room :: String }      -- The name of the room to which the exit leads
+                   room :: RoomType }      -- The name of the room to which the exit leads
     deriving (Eq)
 
 
@@ -113,33 +142,51 @@ getRoomData gd = maybe undefined id (lookup (location_id gd) (world gd))
 
 
 
--- Things which do something to an object and update the game state
-type Action  = String -> GameData -> (GameData, String)
+{-- An alias for the message returned by actions, indicating success or failure --}
+type ReturnValue = String
 
--- Things which just update the game state
-type Command = GameData -> (GameData, String)
+{--
+    Things which just update the game state
+    Originally: type Command = GameData -> (GameData, String)
 
-{-- An enumeration type to describe the direction of movement relative to the current position --}
+    Commands are ONLY ONE WORD.
+--}
+data Command = Action
+             | Quit
+             | Inventory
+
+{--
+    Things which do something to an object and update the game state
+    Originally: type Action  = String -> GameData -> (GameData, String)
+
+    Actions consist of a name, and an argument.
+--}
+data Action = Go -- Direction 
+            | Get -- Object
+            | Put -- Object
+            | Pour -- Object
+            | Drop -- Object
+            | Examine -- Object
+            | Drink -- Object
+            | Open -- Object
+
+{-- 
+    A type to describe the direction of movement relative to the current position.
+    Implements:
+        Eq   - Directions must be comparable
+        Show - We must be able to print a direction to stdout
+        Read - We must be able to read in content from stdin and associate it with the correct type
+--}
 data Direction = North 
                | East 
                | South 
                | West
+               | Out
+               | In
+    deriving (Eq, Show, Read)
 
-{-- 
-data Command a = (Action a)
-                | Quit
-                | Inventory
-                | Nothing
---}
+-- data Expression = Command | Action | Expression Expression
+-- data Verb = Go | Get | Pour | Drop | Examine | Drink | Open
+-- data Noun = Object | Direction
 
-{--
-data Action a = Go (Direction a) 
-                | Get (Object a)
-                | Pour (Object a)
-                | Drop (Object a)
-                | Examine (Object a)
-                | Drink (Object a)
-                | Open (Object a)
-                | Nothing 
---}
 
