@@ -31,18 +31,14 @@ Nothing
 -}
 
 move :: String -> Room -> Maybe String
-move dir (Room _ [] _) = Nothing
-move dir (Room a (exit:exits) b)
-   | exit_dir exit == dir = Just $ room exit
-   | otherwise = move dir (Room a exits b)
+move dir rm
+   | (length $ validExits) /= 0 = Just $ room $ head validExits
+   | otherwise = Nothing
+   where validExits = filter (\exit -> exit_dir exit == dir) (exits rm)
 
 {- Return True if the object appears in the room. -}
-
 objectHere :: String -> Room -> Bool
-objectHere o (Room _ _ []) = False
-objectHere o (Room a b (object:objects)) 
-   | obj_name object == o = True
-   | otherwise = objectHere o (Room a b objects)
+objectHere o rm = any (\obj -> (obj_name obj) == o) (objects  rm)
 
 {- Given an object id and a room description, return a new room description
    without that object -}
