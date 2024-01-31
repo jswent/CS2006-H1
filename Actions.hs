@@ -140,14 +140,17 @@ getRoom room_id game_data = let rooms = world game_data
                               in snd $ head $ filter (\room -> fst room == room_id) rooms
 
 
-{- Given a game state and an object id, find the object in the current
-   room and add it to the player's inventory -}
+{-- 
+   Given a game state and an object id, find the object in the current
+   room and add it to the player's inventory 
+   RE-WRITE WITH MAYBE   
+--}
 -- NOT REFACTORED --
 addInv :: GameData -> Object -> GameData
-addInv game_data object = let room = getRoom (location_id game_data) game_data
-                              object | objectHere object room = [objectData object room]
-                                     | otherwise              = []
-                              in ( gd { inventory = inventory game_data ++ object } )
+addInv game_data user_object = let room = getRoom (location_id game_data) game_data
+                                   object | objectHere user_object room = [objectData user_object room]
+                                          | otherwise              = []
+                              in ( game_data { inventory = inventory game_data ++ object } )
    
 -- addInv :: GameData -> Object -> GameData
 -- addInv game_data user_object = let room = getRoom (location_id game_data) game_data
@@ -239,14 +242,14 @@ put user_object state
    inventory! -}
 
 examine :: Object -> GameData -> (GameData, ReturnValue)
-examine obj state 
-   | objectHere obj rm || carrying state obj =  
+examine user_object state 
+   | objectHere user_object rm || carrying state user_object =  
       (state, obj_longname object ++ ": " ++ obj_desc object)
    where
       rm = getRoom (location_id state) state
-      object = if objectHere obj rm 
-               then objectData obj rm
-               else findObj obj (inventory state)
+      object = if objectHere user_object rm 
+               then objectData user_object rm
+               else findObj (obj_name user_object) (inventory state)
 
 
 {- Pour the coffee. Obviously, this should only work if the player is carrying
