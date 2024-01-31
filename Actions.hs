@@ -75,7 +75,7 @@ Nothing
    If no exit exists from the current room in the user's chosen direction,
    the function will evaluate to Nothing.
 --}
-move :: Direction -> Room -> Maybe RoomType
+move :: Direction -> Room -> Maybe RoomID
 move direction (Room _         _ []           _) = Nothing
 move direction (Room room_type a (exit:exits) b) | exit_dir exit == direction = Just $ room exit
                                                  | otherwise                  = move direction (Room room_type a exits b)
@@ -103,9 +103,9 @@ removeObject user_object room =
    with that object added -}
 addObject :: Object -> Room -> Room
 addObject new_object room
-   | objectHere (obj_name new_object) room = room
-   | otherwise                             = let new_objects = (objects room) ++ [new_object]
-                                             in (room {objects = new_objects})
+   | objectHere new_object room = room
+   | otherwise                  = let new_objects = (objects room) ++ [new_object]
+                                     in (room {objects = new_objects})
 
 {-- 
    Given an object id and a list of objects, return the object data. Note
@@ -125,42 +125,45 @@ objectData user_object rm = findObj (obj_name user_object) (objects rm)
 
 {- Given a game state and a room id, replace the old room information with
    new data. If the room id does not already exist, add it. -}
-updateRoom :: GameData -> RoomType -> Room -> GameData
+updateRoom :: GameData -> RoomID -> Room -> GameData
 updateRoom game_data room_id room_data
-   | length roomArr == 0 = game_data {world = (room_id, room_data) : world game_data}
+   | length roomArr == 0 = game_data { world = (room_id, room_data) : world game_data }
    | otherwise           = let newWorld = map (\tuple -> if (fst tuple) == room_id then (room_id, room_data) else tuple) (world game_data)
                            in ( game_data { world = newWorld } )
    where
       roomArr = filter (\roomTuple -> fst roomTuple == room_id) (world game_data)
 
 
-getRoom :: RoomType -> GameData -> Room
-getRoom room_id game_data = 
-   let 
-      rooms = world game_data
-   in 
-      snd $ head $ filter (\room -> fst room == room_id) rooms
+{-- Given a RoomID, find the Room object with the corresponding ID value and return it --}
+getRoom :: RoomID -> GameData -> Room
+getRoom room_id game_data = let rooms = world game_data
+                              in snd $ head $ filter (\room -> fst room == room_id) rooms
 
 
 {- Given a game state and an object id, find the object in the current
    room and add it to the player's inventory -}
 -- NOT REFACTORED --
 addInv :: GameData -> Object -> GameData
-addInv game_data object = 
-   let
-      room = getRoom (location_id game_data) game_data
-      object | objectHere object room = [objectData object room]
-             | otherwise           = []
-   in ( gd { inventory = inventory game_data ++ object } )
+addInv game_data object = let room = getRoom (location_id game_data) game_data
+                              object | objectHere object room = [objectData object room]
+                                     | otherwise              = []
+                              in ( gd { inventory = inventory game_data ++ object } )
+   
+-- addInv :: GameData -> Object -> GameData
+-- addInv game_data user_object = let room = getRoom (location_id game_data) game_data
+--                                    object | objectHere object room = objectData object room
+--                                  in ( game_data { inventory = inventory game_data ++ object } )
 
 
-{- Given a game state and an object id, remove the object from the
+{- 
+   Given a game state and an object id, remove the object from the
    inventory. Hint: use filter to check if something should still be in
-   the inventory. -}
+   the inventory.
+-}
 -- NOT REFACTORED --
 removeInv :: GameData -> Object -> GameData
-removeInv gd obj = 
-   gd { inventory = filter (\object -> obj_name object /= obj) (inventory gd) }
+removeInv game_data user_object = 
+   game_data { inventory = filter (\obj -> obj_name obj /= obj_name user_object) (inventory game_data) }
 
 
 {- Does the inventory in the game state contain the given object? -}
@@ -188,8 +191,8 @@ go direction state | (newRoomMaybeStr == Nothing) = (state, "No room in that dir
                      currentRoom = getRoom (location_id state) state
                      newRoomMaybeStr = move direction currentRoom
                      newRoomStr = case newRoomMaybeStr of
-                        Nothing    -> ""
-                        Just value -> value -- Value is a String but RoomType is being returned
+                        Just value -> value -- If a value was 
+                        Nothing    -> room_name currentRoom
                      newState = state {
                         location_id = newRoomStr
                      }
@@ -206,15 +209,15 @@ go direction state | (newRoomMaybeStr == Nothing) = (state, "No room in that dir
     * update the game state with this new room in the current location
       (use 'location_id' to find where the player is)
 -}
-
+-- REFACTOR COMPLETE --
 get :: Object -> GameData -> (GameData, ReturnValue)
 get object state
    | objectHere object room = (newState, "Item picked up successfully")
    | otherwise = (state, "Item not in room")
    where 
       room = getRoom (location_id state) state
-      newRoom = removeObject obj room
-      newState = updateRoom (addInv state obj) (location_id state) newRoom
+      newRoom = removeObject object room
+      newState = updateRoom (addInv state object) (location_id state) newRoom
 
 {- Remove an item from the player's inventory, and put it in the current room.
    Similar to 'get' but in reverse - find the object in the inventory, create
@@ -272,10 +275,10 @@ pour object state
 
 drink :: Object -> GameData -> (GameData, ReturnValue)
 drink object state
-   | carrying state "mug" && (poured state) = (newState, "Coffee has been drunk and you are now caffeinated")
+   | carrying state mug && (poured state)   = (newState, "Coffee has been drunk and you are now caffeinated")
    | otherwise                              = (state, "To drink the coffee you must have a full mug of coffee in your inventory")
    where
-      newInventory = mug : (filter (\obj -> obj_name obj /= "mug") (inventory state))
+      newInventory = mug : (filter (\obj -> obj_name obj /= Mug) (inventory state))
       newState = state { 
          inventory = newInventory,
          caffeinated = True,

@@ -2,8 +2,8 @@ module World where
 
 
 {-- GameData --}
-data GameData = GameData { location_id :: RoomType,      -- where player is
-                           world :: [(String, Room)],  -- all possible locations
+data GameData = GameData { location_id :: RoomID,      -- where player is
+                           world :: [(RoomID, Room)],  -- all possible locations
                            inventory :: [Object],      -- objects player has
                            poured :: Bool,             -- coffee is poured
                            caffeinated :: Bool,        -- coffee is drunk
@@ -19,25 +19,7 @@ data Object = Obj { obj_name :: ObjectType,  -- The short name of the object (al
 
 data ObjectType = Mug | FullMug | CoffeePot 
     deriving (Eq)
-{--
 
-    Alternate Object definition:
-
-    data Object = Mug { obj_name :: String,
-                    obj_longname :: String,
-                    obj_desc :: String }
-                | FullMug { obj_name :: String,
-                    obj_longname :: String,
-                    obj_desc :: String }
-                | CoffeePot { obj_name :: String,
-                    obj_longname :: String,
-                    obj_desc :: String }
-    deriving (Eq)
-
-    This would obviously increase code repetition, but would avoid the hassles
-    of having multiple types to describe different variations of objects.
-    Pattern matching would be used as opposed to String comparison
---}
 
 instance Show Object where
     show obj = obj_longname obj
@@ -58,13 +40,13 @@ coffeepot = Obj CoffeePot "a pot of coffee" "A pot containing freshly brewed cof
 
 
 {-- Room --}
-data Room = Room {  room_name :: RoomType, -- 
+data Room = Room {  room_name :: RoomID, -- 
                     room_desc :: String,   -- The name of the room / description of its purpose
                     exits :: [Exit],       -- The exit routes from the current room to another, if applicable
                     objects :: [Object] }  -- The objects contained within the current room
     deriving (Eq)
 
-data RoomType = Bedroom 
+data RoomID = Bedroom 
               | Kitchen 
               | Hall 
               | Street
@@ -81,7 +63,7 @@ instance Show Room where
 {-- Room Constructors --}
 bedroom, kitchen, hall, street :: Room
 
-bedroom = Room Bedroom                                               -- RoomType
+bedroom = Room Bedroom                                               -- RoomID
                 "You are in your bedroom."                           -- Room description
                [Exit North "To the north is a kitchen. " Kitchen]  -- [Exit]
                [mug]
@@ -108,10 +90,10 @@ street = Room Street
               []
 
 {-- A list of all possible environments that the player could find themselves in --}
-gameworld = [("bedroom", bedroom),
-             ("kitchen", kitchen),
-             ("hall", hall),
-             ("street", street)]
+gameworld = [(Bedroom, bedroom),
+             (Kitchen, kitchen),
+             (Hall, hall),
+             (Street, street)]
    
 
 
@@ -119,7 +101,7 @@ gameworld = [("bedroom", bedroom),
 {-- Exit --}
 data Exit = Exit { exit_dir :: Direction,   -- The direction of the exit relative to the player's position in the room
                    exit_desc :: String,  -- A description of the exit route
-                   room :: RoomType }      -- The name of the room to which the exit leads
+                   room :: RoomID }      -- The name of the room to which the exit leads
     deriving (Eq)
 
 
@@ -192,3 +174,24 @@ data Direction = North
 -- data Noun = Object | Direction
 
 
+
+
+{--
+
+    Alternate Object definition:
+
+    data Object = Mug { obj_name :: String,
+                    obj_longname :: String,
+                    obj_desc :: String }
+                | FullMug { obj_name :: String,
+                    obj_longname :: String,
+                    obj_desc :: String }
+                | CoffeePot { obj_name :: String,
+                    obj_longname :: String,
+                    obj_desc :: String }
+    deriving (Eq)
+
+    This would obviously increase code repetition, but would avoid the hassles
+    of having multiple types to describe different variations of objects.
+    Pattern matching would be used as opposed to String comparison
+--}
