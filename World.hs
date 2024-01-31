@@ -17,7 +17,7 @@ data Object = Obj { obj_name :: ObjectType,  -- The short name of the object (al
                     obj_desc :: String }     -- A description of the object
     deriving (Eq)
 
-data ObjectType = Mug | FullMug | CoffeePot 
+data ObjectType = Mug | FullMug | CoffeePot | Laptop
     deriving (Eq)
 
 
@@ -31,11 +31,11 @@ instance Show Object where
 --     (==) _ _ = False
 
 
-mug, fullmug, coffeepot :: Object
-mug       = Obj Mug "a coffee mug" "A coffee mug"
-fullmug   = Obj FullMug "a full coffee mug" "A coffee mug containing freshly brewed coffee"
-coffeepot = Obj CoffeePot "a pot of coffee" "A pot containing freshly brewed coffee"
-
+mug, fullmug, coffeepot, laptop :: Object
+mug       = Obj Mug       "a coffee mug"      "A coffee mug"
+fullmug   = Obj FullMug   "a full coffee mug" "A coffee mug containing freshly brewed coffee"
+coffeepot = Obj CoffeePot "a pot of coffee"   "A pot containing freshly brewed coffee"
+laptop    = Obj Laptop    "a laptop"          "A laptop for studying"
 
 
 
@@ -46,10 +46,7 @@ data Room = Room {  room_name :: RoomID, --
                     objects :: [Object] }  -- The objects contained within the current room
     deriving (Eq)
 
-data RoomID = Bedroom 
-              | Kitchen 
-              | Hall 
-              | Street
+data RoomID = Bedroom | Kitchen | Hall | Street | Lounge
     deriving (Eq, Show)
 
 instance Show Room where
@@ -61,7 +58,7 @@ instance Show Room where
              showInv' (x:xs) = show x ++ ", " ++ showInv' xs
 
 {-- Room Constructors --}
-bedroom, kitchen, hall, street :: Room
+bedroom, kitchen, lounge, hall, street :: Room
 
 bedroom = Room Bedroom                                               -- RoomID
                 "You are in your bedroom."                           -- Room description
@@ -73,6 +70,11 @@ kitchen = Room Kitchen
                [Exit South "To the south is your bedroom. " Bedroom,
                 Exit West "To the west is a hallway. " Hall]
                [coffeepot]
+
+lounge = Room Lounge
+              "You are in the lounge."
+              []
+              [laptop]
 
 hall = Room Hall
             "You are in the hallway. The front door is closed. "
@@ -92,8 +94,8 @@ street = Room Street
 {-- A list of all possible environments that the player could find themselves in --}
 gameworld = [(Bedroom, bedroom),
              (Kitchen, kitchen),
-             (Hall, hall),
-             (Street, street)]
+             (Hall,    hall),
+             (Street,  street)  ]
    
 
 

@@ -225,14 +225,14 @@ get object state
 -}
 
 put :: Object -> GameData -> (GameData, ReturnValue)
-put obj state 
-   | carrying state obj = (newState, "Item put down successfully")
+put user_object state 
+   | carrying state user_object = (newState, "Item put down successfully")
    | otherwise          = (state, "Item not in inventory")
    where 
       room = getRoom (location_id state) state
-      object = findObj obj (inventory state)
+      object = findObj (obj_name user_object) (inventory state)
       newRoom = addObject object room
-      newState = updateRoom (removeInv state obj) (location_id state) newRoom
+      newState = updateRoom (removeInv state user_object) (location_id state) newRoom
 
 {- Don't update the state, just return a message giving the full description
    of the object. As long as it's either in the room or the player's 
