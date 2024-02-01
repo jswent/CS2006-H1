@@ -7,6 +7,8 @@ import Control.Monad
 import System.IO
 import System.Exit
 
+import System.Console.Haskeline
+
 winmessage = "Congratulations, you have made it out of the house.\n" ++
              "Now go to your lectures..."
 
@@ -22,18 +24,21 @@ process state [cmd]     = case commands cmd of
                             Nothing -> (state, "I don't understand")
 process state _ = (state, "I don't understand")
 
-repl :: GameData -> IO GameData
+repl :: GameData -> InputT IO GameData
 repl state | finished state = return state
-repl state = do print state
-                putStr "What now? "
-                hFlush stdout
-                cmd <- getLine
-                let (state', msg) = process state (words cmd)
-                putStrLn msg
-                if (won state') then do putStrLn winmessage
-                                        return state'
-                               else repl state'
+repl state = do
+    outputStrLn $ show state
+    outputStr "What now? "
+    mcmd <- getInputLine ""
+    case mcmd of
+      Nothing -> return state  -- Handle end-of-input (e.g., EOF/Ctrl-D)
+      Just cmd -> do
+        let (state', msg) = process state (words cmd)
+        outputStrLn msg
+        if won state'
+          then do outputStrLn winmessage
+                  return state'
+          else repl state'
 
 main :: IO ()
-main = do repl initState
-          return ()
+main = runInputT defaultSettings (repl initState) >> return ()
