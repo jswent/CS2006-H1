@@ -132,29 +132,37 @@ getRoomData game_data = maybe undefined id (lookup (location_id game_data) (worl
 type ReturnValue = String
 
 {--
+    Things which do something to an object and update the game state.
+--}
+type Action = Instruction -> GameData -> (GameData, ReturnValue)
+
+{--
+    Things which just update game state.    
+--}
+type Command = GameData -> (GameData, ReturnValue)
+
+{--
     Things which just update the game state
     Originally: type Command = GameData -> (GameData, String)
 
-    Commands are ONLY ONE WORD.
---}
-data Command = Action
-             | Quit
-             | Inventory
-
-{--
     Things which do something to an object and update the game state
     Originally: type Action  = String -> GameData -> (GameData, String)
 
     Actions consist of a name, and an argument.
 --}
-data Action = Go -- Direction 
-            | Get -- Object
-            | Put -- Object
-            | Pour -- Object
-            | Drop -- Object
-            | Examine -- Object
-            | Drink -- Object
-            | Open -- Object
+
+data Instruction = Go Direction  -- Action
+             | Get Object        -- Action
+             | Put Object        -- Action
+             | Pour              -- Action
+            --  | Drop Object       -- Action
+             | Examine Object    -- Action
+             | Drink Object      -- Action
+             | Open              -- Action
+            --  | Action            -- Command
+             | Quit              -- Command
+             | Inventory         -- Command
+  deriving (Eq, Show)
 
 {-- 
     A type to describe the direction of movement relative to the current position.

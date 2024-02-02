@@ -4,20 +4,25 @@ import World
 
 {-- Function that returns an Action based on user input --}
 actions :: String -> Maybe Action
-actions "go"      = Just Go
-actions "get"     = Just Get
-actions "drop"    = Just Put
-actions "pour"    = Just Pour
-actions "examine" = Just Examine
-actions "drink"   = Just Drink
-actions "open"    = Just Open
+actions "go"      = Just go
+actions "get"     = Just get
+actions "put"     = Just put
+-- actions "drop"    = Just drop
+actions "pour"    = Just pour
+actions "examine" = Just examine
+actions "drink"   = Just drink
+actions "open"    = Just open
 actions _         = Nothing
+
+
 
 {-- Function that returns a Command based on user input --}
 commands :: String -> Maybe Command
-commands "quit"      = Just Quit
-commands "inventory" = Just Inventory
+commands "quit"      = Just quit
+commands "inventory" = Just inv
 commands _           = Nothing
+
+
 
 {-- Take a String and convert it to the associated Direction type, if applicable --}
 directions :: String -> Maybe Direction
@@ -186,19 +191,18 @@ e.g.
 (kitchen,"OK")
 
 -}
--- REFACTOR NOT COMPLETE --
-go :: Direction -> GameData -> (GameData, ReturnValue)
-go direction state | (newRoomMaybeStr == Nothing) = (state, "No room in that direction.")
-                   | otherwise                    = (newState, "OK")
-                  where
-                     currentRoom = getRoom (location_id state) state
-                     newRoomMaybeStr = move direction currentRoom
-                     newRoomStr = case newRoomMaybeStr of
-                        Just value -> value -- If a value was 
-                        Nothing    -> room_name currentRoom
-                     newState = state {
-                        location_id = newRoomStr
-                     }
+go :: Instruction -> GameData -> (GameData, ReturnValue)
+go (Go direction) state | (newRoomMaybeStr == Nothing) = (state, "No room in that direction.")
+                        | otherwise                    = (newState, "OK")
+                     where
+                        currentRoom = getRoom (location_id state) state
+                        newRoomMaybeStr = move direction currentRoom
+                        newRoomStr = case newRoomMaybeStr of
+                           Just value -> value -- If a value was 
+                           Nothing    -> room_name currentRoom
+                        newState = state {
+                           location_id = newRoomStr
+                        }
 
 
 {- Remove an item from the current room, and put it in the player's inventory.
@@ -212,62 +216,58 @@ go direction state | (newRoomMaybeStr == Nothing) = (state, "No room in that dir
     * update the game state with this new room in the current location
       (use 'location_id' to find where the player is)
 -}
--- REFACTOR COMPLETE --
-get :: Object -> GameData -> (GameData, ReturnValue)
-get object state
-   | objectHere object room = (newState, "Item picked up successfully")
-   | otherwise = (state, "Item not in room")
-   where 
-      room = getRoom (location_id state) state
-      newRoom = removeObject object room
-      newState = updateRoom (addInv state object) (location_id state) newRoom
+get :: Action
+get (Get user_object) state
+      | objectHere user_object room = (newState, "Item picked up successfully")
+      | otherwise = (state, "Item not in room")
+      where 
+         room = getRoom (location_id state) state
+         newRoom = removeObject user_object room
+         newState = updateRoom (addInv state user_object) (location_id state) newRoom
 
 {- Remove an item from the player's inventory, and put it in the current room.
    Similar to 'get' but in reverse - find the object in the inventory, create
    a new room with the object in, update the game world with the new room.
 -}
-
-put :: Object -> GameData -> (GameData, ReturnValue)
-put user_object state 
-   | carrying state user_object = (newState, "Item put down successfully")
-   | otherwise          = (state, "Item not in inventory")
-   where 
-      room = getRoom (location_id state) state
-      object = findObj (obj_name user_object) (inventory state)
-      newRoom = addObject object room
-      newState = updateRoom (removeInv state user_object) (location_id state) newRoom
+put :: Action
+put (Put user_object) state 
+      | carrying state user_object = (newState, "Item put down successfully")
+      | otherwise          = (state, "Item not in inventory")
+      where 
+         room = getRoom (location_id state) state
+         object = findObj (obj_name user_object) (inventory state)
+         newRoom = addObject object room
+         newState = updateRoom (removeInv state user_object) (location_id state) newRoom
 
 {- Don't update the state, just return a message giving the full description
    of the object. As long as it's either in the room or the player's 
    inventory! -}
-
-examine :: Object -> GameData -> (GameData, ReturnValue)
-examine user_object state 
-   | objectHere user_object rm || carrying state user_object =  
-      (state, obj_longname object ++ ": " ++ obj_desc object)
-   where
-      rm = getRoom (location_id state) state
-      object = if objectHere user_object rm 
-               then objectData user_object rm
-               else findObj (obj_name user_object) (inventory state)
+examine :: Action
+examine (Examine user_object) state 
+      | objectHere user_object rm || carrying state user_object =  
+         (state, obj_longname object ++ ": " ++ obj_desc object)
+      where
+         rm = getRoom (location_id state) state
+         object = if objectHere user_object rm 
+                  then objectData user_object rm
+                  else findObj (obj_name user_object) (inventory state)
 
 
 {- Pour the coffee. Obviously, this should only work if the player is carrying
    both the pot and the mug. This should update the status of the "mug"
    object in the player's inventory to be a new object, a "full mug".
 -}
-
-pour :: Object -> GameData -> (GameData, ReturnValue)
-pour object state
-   | carrying state coffeepot && carrying state mug && not (poured state) = (newState, "Coffee mug is now full and ready to drink")
-   | carrying state coffeepot && carrying state mug = (state, "Coffee mug is already full and ready to drink")
-   | otherwise = (state, "Cannot pour coffee until you have both the coffee pot and a mug in your inventory")
-   where
-      newInventory = fullmug : (filter (\obj -> obj_name obj /= Mug) (inventory state)) -- Check that fullmug wasn't mug
-      newState = state { 
-         inventory = newInventory,
-         poured = True
-      }
+pour :: Action
+pour (Pour) state
+      | carrying state coffeepot && carrying state mug && not (poured state) = (newState, "Coffee mug is now full and ready to drink")
+      | carrying state coffeepot && carrying state mug = (state, "Coffee mug is already full and ready to drink")
+      | otherwise = (state, "Cannot pour coffee until you have both the coffee pot and a mug in your inventory")
+      where
+         newInventory = fullmug : (filter (\obj -> obj_name obj /= Mug) (inventory state)) -- Check that fullmug wasn't mug
+         newState = state { 
+            inventory = newInventory,
+            poured = True
+         }
 
 {- Drink the coffee. This should only work if the player has a full coffee 
    mug! Doing this is required to be allowed to open the door. Once it is
@@ -275,18 +275,17 @@ pour object state
 
    Also, put the empty coffee mug back in the inventory!
 -}
-
-drink :: Object -> GameData -> (GameData, ReturnValue)
-drink object state
-   | carrying state mug && (poured state)   = (newState, "Coffee has been drunk and you are now caffeinated")
-   | otherwise                              = (state, "To drink the coffee you must have a full mug of coffee in your inventory")
-   where
-      newInventory = mug : (filter (\obj -> obj_name obj /= Mug) (inventory state))
-      newState = state { 
-         inventory = newInventory,
-         caffeinated = True,
-         poured = False
-      }
+drink :: Action
+drink (Drink object) state
+      | carrying state mug && (poured state) = (newState, "Coffee has been drunk and you are now caffeinated")
+      | otherwise                            = (state, "To drink the coffee you must have a full mug of coffee in your inventory")
+      where
+         newInventory = mug : (filter (\obj -> obj_name obj /= Mug) (inventory state))
+         newState = state { 
+            inventory = newInventory,
+            caffeinated = True,
+            poured = False
+         }
 
 
 {- Open the door. Only allowed if the player has had coffee! 
@@ -296,27 +295,24 @@ drink object state
    Use 'updateRoom' once you have made a new description. You can use 
    'openedhall' and 'openedexits' from World.hs for this.
 -}
-
-open :: Object -> GameData -> (GameData, ReturnValue)
-open obj state --must be in hall
-   | caffeinated state && (location_id state) == Hall = (newState, "Door has been opened to the street!")
-   | otherwise                                        = (state, "You are too sleepy. To open the door you must have drunk a mug of coffee.")
-   where
-      newHall = hall {  room_desc = openedhall,
-                        exits = openedexits }
-      newState = (updateRoom state Hall newHall)
+open :: Action
+open (Open) state --must be in hall
+      | caffeinated state && (location_id state) == Hall = (newState, "Door has been opened to the street!")
+      | otherwise                                        = (state, "You are too sleepy. To open the door you must have drunk a mug of coffee.")
+      where
+         newHall = hall {  room_desc = openedhall,
+                           exits = openedexits }
+         newState = (updateRoom state Hall newHall)
       
 
 
 {- Don't update the game state, just list what the player is carrying -}
-
-inv :: GameData -> (GameData, ReturnValue)
+inv :: Command
 inv state = (state, showInv (inventory state))
    where showInv [] = "You aren't carrying anything"
          showInv xs = "You are carrying:\n" ++ showInv' xs
          showInv' [x] = obj_longname x
          showInv' (x:xs) = obj_longname x ++ "\n" ++ showInv' xs
 
-quit :: GameData -> (GameData, ReturnValue)
+quit :: Command
 quit state = (state { finished = True }, "Bye bye")
-
