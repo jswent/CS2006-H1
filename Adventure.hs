@@ -50,7 +50,8 @@ process state _ = (state, "I don't understand")
 repl :: GameData -> InputT IO GameData
 repl state | finished state = return state
 repl state = do
-    outputStrLn $ show state
+    outputStrLn ""
+    outputStrLn $ show state ++ "\n"
     outputStr "What now? "
     mcmd <- getInputLine ""
     case mcmd of
@@ -58,9 +59,11 @@ repl state = do
       Just cmd -> do
         if isSaveCommand cmd then do
           liftIO $ writeFile (getFilePath cmd) (byteStringToString (encode state))
+          outputStrLn "Game saved successfully"
           repl state
         else if isLoadCommand cmd then do
           newState <- handleLoad cmd
+          outputStrLn "Game Loaded successfully"
           repl newState
         else do
           let (state', msg) = process state (words cmd)
