@@ -19,7 +19,9 @@ winmessage = "Congratulations, you have made it out of the house.\n" ++
 --}
 process :: GameData -> [String] -> (GameData, ReturnValue)
 process state [cmd,arg] = case actions cmd of  -- Check for action validity
-                            Just fn -> fn arg state
+                            Just fn -> case arguments arg of
+                                        Just a -> fn a state
+                                        Nothing -> (state, "I don't understand")
                             Nothing -> (state, "I don't understand")
 process state [cmd]     = case commands cmd of -- Check for command validity
                             Just fn -> fn state

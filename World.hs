@@ -1,6 +1,38 @@
 module World where
 
 
+{-- Action and Command --}
+{-- Actions are things which do something to an object and update the game state. --}
+type Action = Argument -> GameData -> (GameData, ReturnValue)
+
+{-- A required parameter for an Action. --}
+data Argument = ObjArg (Object) 
+              | DirArg (Direction)
+
+{-- An alias for the message returned by actions, indicating success or failure. --}
+type ReturnValue = String
+
+{-- Commands are things which just update game state. --}
+type Command = GameData -> (GameData, ReturnValue)
+
+{-- 
+    A type to describe the direction of movement relative to the current position.
+    Implements:
+        Eq   - Directions must be comparable
+        Show - We must be able to print a direction to stdout
+        Read - We must be able to read in content from stdin and associate it with the correct type
+--}
+data Direction = North 
+               | East 
+               | South 
+               | West
+               | Out
+               | In
+    deriving (Eq, Show, Read)
+
+
+
+
 {-- GameData --}
 data GameData = GameData { location_id :: RoomID,      -- where player is
                            world :: [(RoomID, Room)],  -- all possible locations
@@ -42,7 +74,6 @@ laptop    = Object Laptop    "a laptop"          "A laptop for studying"
 -- objects = [
 --     ()
 -- ]
-
 
 
 
@@ -136,29 +167,4 @@ getRoomData game_data = maybe undefined id (lookup (location_id game_data) (worl
 
 
 
-{-- An alias for the message returned by actions, indicating success or failure. --}
-type ReturnValue = String
 
-{-- Things which do something to an object and update the game state. --}
-type Action = Argument -> GameData -> (GameData, ReturnValue)
-
-{-- A required parameter for an Action. --}
-data Argument = Obj (Object) | Dir (Direction)
-
-{-- Things which just update game state. --}
-type Command = GameData -> (GameData, ReturnValue)
-
-{-- 
-    A type to describe the direction of movement relative to the current position.
-    Implements:
-        Eq   - Directions must be comparable
-        Show - We must be able to print a direction to stdout
-        Read - We must be able to read in content from stdin and associate it with the correct type
---}
-data Direction = North 
-               | East 
-               | South 
-               | West
-               | Out
-               | In
-    deriving (Eq, Show, Read)

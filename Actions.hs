@@ -15,25 +15,12 @@ actions "open"    = Just open
 actions _         = Nothing
 
 
-
 {-- Function that returns a Command based on user input --}
 commands :: String -> Maybe Command
 commands "quit"      = Just quit
 commands "inventory" = Just inv
 commands _           = Nothing
 
-
-
--- {-- Take an Action and a String and attempt to derive the correct Instruction --}
--- instructions :: Action -> String -> Maybe Instruction
--- instructions go      input_string = do direction <- directions input_string
---                                        return (Go direction)
--- instructions get     input_string = 
--- instructions put     input_string = 
--- instructions pour    _            = Just Pour
--- instructions examine input_string = 
--- instructions drink   input_string = 
--- instructions open    _            = Just Open
 
 {-- 
     Take a String and convert it to an Argument for an Action, if applicable. 
@@ -43,32 +30,18 @@ commands _           = Nothing
     fail, its result will be returned.
 --}
 arguments :: String -> Maybe Argument
-arguments input_string = do try_direction <- directions input_string
-                            if try_direction == Nothing then  -- If the conversion to a Direction fails
-                                do try_object <- matchObjectType input_string
-                                   return (Obj try_object)  -- Return regardless of whether it's an empty value
-                            else
-                                return (Dir try_direction)  -- The conversion to a Direction was successful
-                             
-                             
+arguments "north"     = Just (DirArg North)
+arguments "east"      = Just (DirArg East)
+arguments "south"     = Just (DirArg South)
+arguments "west"      = Just (DirArg West)
+arguments "in"        = Just (DirArg In)
+arguments "out"       = Just (DirArg Out)
+arguments "mug"       = Just (ObjArg mug)
+-- arguments "fullmug"   = Just fArgullmug
+arguments "coffeepot" = Just (ObjArg coffeepot)
+arguments "laptop"    = Just (ObjArg laptop)
+arguments _           = Nothing
 
-
-{-- Take a String and convert it to the associated Direction type, if applicable --}
-directions :: String -> Maybe Direction
-directions "north" = Just North
-directions "east"  = Just East
-directions "south" = Just South
-directions "west"  = Just West
-directions "in"    = Just In
-directions "out"   = Just Out
-directions _       = Nothing
-
-matchObjectType :: String -> Maybe Object
-matchObjectType "mug"       = Just mug
--- matchObjectType "fullmug"   = Just fullmug
-matchObjectType "coffeepot" = Just coffeepot
-matchObjectType "laptop"    = Just laptop
-matchObjectType _           = Nothing
 
 {-- 
    An alternative to "head", which will return the first element in 
@@ -215,7 +188,7 @@ e.g.
 
 -}
 go :: Action
-go direction state | (newRoomMaybeStr == Nothing) = (state, "No room in that direction.")
+go (DirArg direction) state | (newRoomMaybeStr == Nothing) = (state, "No room in that direction.")
                         | otherwise                    = (newState, "OK")
                      where
                         currentRoom = getRoom (location_id state) state
@@ -240,7 +213,7 @@ go direction state | (newRoomMaybeStr == Nothing) = (state, "No room in that dir
       (use 'location_id' to find where the player is)
 -}
 get :: Action
-get user_object state
+get (ObjArg user_object) state
       | objectHere user_object room = (newState, "Item picked up successfully")
       | otherwise = (state, "Item not in room")
       where 
@@ -253,7 +226,7 @@ get user_object state
    a new room with the object in, update the game world with the new room.
 -}
 put :: Action
-put user_object state 
+put (ObjArg user_object) state 
       | carrying state user_object = (newState, "Item put down successfully")
       | otherwise          = (state, "Item not in inventory")
       where 
@@ -266,7 +239,7 @@ put user_object state
    of the object. As long as it's either in the room or the player's 
    inventory! -}
 examine :: Action
-examine user_object state 
+examine (ObjArg user_object) state 
       | objectHere user_object rm || carrying state user_object =  
          (state, obj_longname object ++ ": " ++ obj_desc object)
       where
@@ -299,7 +272,7 @@ pour _ state
    Also, put the empty coffee mug back in the inventory!
 -}
 drink :: Action
-drink object state
+drink (ObjArg object) state
       | carrying state mug && (poured state) = (newState, "Coffee has been drunk and you are now caffeinated")
       | otherwise                            = (state, "To drink the coffee you must have a full mug of coffee in your inventory")
       where
