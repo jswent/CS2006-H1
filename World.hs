@@ -91,6 +91,7 @@ hall = Room "You are in the hallway. The front door is closed. "
 lounge = Room "You are in the lounge. The light switch is off"
             [Exit "east" "To the east is a bedroom. " "bedroom"]
             [laptop]
+litloungedesc = "You are in the lounge. The light switch is on"
 
 -- New data about the hall for when we open the door
 

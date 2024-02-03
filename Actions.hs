@@ -266,9 +266,9 @@ open obj state --must be in hall
 
 press :: Action
 press obj state
-   | (location_id state) == "lounge" = (state {light = True}, "Light is switched on.")
+   | (location_id state) == "lounge" = (newState {light = True}, "Light is switched on.")
    | otherwise = (state, "To turn on the light you must be in the lounge.")
-      
+   where newState = updateRoom state "lounge" (lounge {room_desc = litloungedesc})
 
 
 {- Don't update the game state, just list what the player is carrying -}
