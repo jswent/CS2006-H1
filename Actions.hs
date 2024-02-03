@@ -54,7 +54,7 @@ removeObject o rm =
 {- Given an object and a room description, return a new room description
    with that object added -}
 
-addObject :: Object -> Room -> Room
+addObject :: WorldObject -> Room -> Room
 addObject o rm
    | objectHere (obj_name o) rm = rm
    | otherwise = let new_objs = (objects rm) ++ [o]
@@ -65,12 +65,12 @@ addObject o rm
    checked with 'objectHere') -}
 
 --Rory - Head is safe to use here as we can assume object is present in list
-findObj :: String -> [Object] -> Object
+findObj :: String -> [WorldObject] -> WorldObject
 findObj o os = head $ filter (\obj -> obj_name obj == o) os
 
 {- Use 'findObj' to find an object in a room description -}
 
-objectData :: String -> Room -> Object
+objectData :: String -> Room -> WorldObject
 objectData o rm = findObj o (objects rm)
 
 {- Given a game state and a room id, replace the old room information with
