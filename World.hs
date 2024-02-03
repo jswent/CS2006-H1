@@ -11,13 +11,15 @@ data GameData = GameData { location_id :: RoomID,      -- where player is
                          }
 
 
+
+
 {-- Object --}
-data Object = Obj { obj_name :: ObjectType,  -- The short name of the object (also its type)
+data Object = Object { obj_name :: ObjectType,  -- The short name of the object (also its type)
                     obj_longname :: String,  -- The long name of the object
                     obj_desc :: String }     -- A description of the object
     deriving (Eq)
 
-data ObjectType = Mug | FullMug | CoffeePot | Laptop
+data ObjectType = Mug | CoffeePot | Laptop
     deriving (Eq)
 
 
@@ -32,10 +34,16 @@ instance Show Object where
 
 
 mug, fullmug, coffeepot, laptop :: Object
-mug       = Obj Mug       "a coffee mug"      "A coffee mug"
-fullmug   = Obj FullMug   "a full coffee mug" "A coffee mug containing freshly brewed coffee"
-coffeepot = Obj CoffeePot "a pot of coffee"   "A pot containing freshly brewed coffee"
-laptop    = Obj Laptop    "a laptop"          "A laptop for studying"
+mug       = Object Mug       "a coffee mug"      "A coffee mug"
+fullmug   = Object Mug       "a full coffee mug" "A coffee mug containing freshly brewed coffee"
+coffeepot = Object CoffeePot "a pot of coffee"   "A pot containing freshly brewed coffee"
+laptop    = Object Laptop    "a laptop"          "A laptop for studying"
+
+-- objects = [
+--     ()
+-- ]
+
+
 
 
 
@@ -128,41 +136,17 @@ getRoomData game_data = maybe undefined id (lookup (location_id game_data) (worl
 
 
 
-{-- An alias for the message returned by actions, indicating success or failure --}
+{-- An alias for the message returned by actions, indicating success or failure. --}
 type ReturnValue = String
 
-{--
-    Things which do something to an object and update the game state.
---}
-type Action = Instruction -> GameData -> (GameData, ReturnValue)
+{-- Things which do something to an object and update the game state. --}
+type Action = Argument -> GameData -> (GameData, ReturnValue)
 
-{--
-    Things which just update game state.    
---}
+{-- A required parameter for an Action. --}
+data Argument = Obj (Object) | Dir (Direction)
+
+{-- Things which just update game state. --}
 type Command = GameData -> (GameData, ReturnValue)
-
-{--
-    Things which just update the game state
-    Originally: type Command = GameData -> (GameData, String)
-
-    Things which do something to an object and update the game state
-    Originally: type Action  = String -> GameData -> (GameData, String)
-
-    Actions consist of a name, and an argument.
---}
-
-data Instruction = Go Direction  -- Action
-             | Get Object        -- Action
-             | Put Object        -- Action
-             | Pour              -- Action
-            --  | Drop Object       -- Action
-             | Examine Object    -- Action
-             | Drink Object      -- Action
-             | Open              -- Action
-            --  | Action            -- Command
-             | Quit              -- Command
-             | Inventory         -- Command
-  deriving (Eq, Show)
 
 {-- 
     A type to describe the direction of movement relative to the current position.
@@ -178,30 +162,3 @@ data Direction = North
                | Out
                | In
     deriving (Eq, Show, Read)
-
--- data Expression = Command | Action | Expression Expression
--- data Verb = Go | Get | Pour | Drop | Examine | Drink | Open
--- data Noun = Object | Direction
-
-
-
-
-{--
-
-    Alternate Object definition:
-
-    data Object = Mug { obj_name :: String,
-                    obj_longname :: String,
-                    obj_desc :: String }
-                | FullMug { obj_name :: String,
-                    obj_longname :: String,
-                    obj_desc :: String }
-                | CoffeePot { obj_name :: String,
-                    obj_longname :: String,
-                    obj_desc :: String }
-    deriving (Eq)
-
-    This would obviously increase code repetition, but would avoid the hassles
-    of having multiple types to describe different variations of objects.
-    Pattern matching would be used as opposed to String comparison
---}
