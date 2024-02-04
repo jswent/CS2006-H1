@@ -46,7 +46,7 @@ data GameData = GameData { location_id :: RoomID,      -- Where player is
                            inventory :: [WorldObject], -- Objects player has
                            poured :: Bool,             -- Coffee is poured
                            caffeinated :: Bool,        -- Coffee is drunk
-                           finished :: Bool            -- Set to True at the end
+                           finished :: Bool,            -- Set to True at the end
                            light :: Bool               -- Light is on
                          }
     deriving (Generic)
