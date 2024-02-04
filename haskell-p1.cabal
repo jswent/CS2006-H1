@@ -26,3 +26,14 @@ executable haskell-p1
                        bytestring,
                        Haskell-P1
   default-language:    Haskell2010
+
+test-suite haskell-p1-test
+  type:                exitcode-stdio-1.0
+  main-is:             Test.hs
+  other-modules:       ActionsTest WorldTest
+  build-depends:       base,
+                       haskeline,
+                       QuickCheck,
+                       Haskell-P1
+  hs-source-dirs:      test
+  default-language:    Haskell2010
