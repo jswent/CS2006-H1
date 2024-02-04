@@ -1,0 +1,19 @@
+cabal-version:       >=1.10
+
+-- Simple package description to aid with building the executable.
+-- At command line 'cabal run' will deal with the compilation and running the code
+
+name:                Haskell-P1
+version:             0.1.0.0
+author:              220018336
+maintainer:          rp218@st-andrews.ac.uk
+build-type:          Simple
+
+executable haskell-p1
+  main-is:             Adventure.hs
+  other-modules:       Actions World
+  build-depends:       base >= 4.14,
+                       haskeline >= 0.8,
+                       aeson,
+                       bytestring
+  default-language:    Haskell2010
