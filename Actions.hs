@@ -92,7 +92,7 @@ move direction (Room room_type a (exit:exits) b) | (exit_dir exit == direction) 
 
 {-- Return True if the object appears in the room. --}
 objectHere :: WorldObject -> Room -> Bool
-objectHere user_object room = any (\obj -> (obj_name obj) == user_object) (objects room)
+objectHere user_object room = any (\obj -> (obj_name obj) == (obj_name user_object)) (objects room)
 
 
 {-- 
@@ -310,9 +310,9 @@ open _ state -- Must be in Hall
 --}
 press :: Action
 press _ state
-   | (location_id state) == "lounge" = (newState {light = True}, "Light is switched on.")
-   | otherwise = (state, "To turn on the light you must be in the lounge.")
-   where newState = updateRoom state "lounge" (lounge {room_desc = litloungedesc})
+   | (location_id state) == Lounge = (newState {light = True}, "Light is switched on.")
+   | otherwise                     = (state, "To turn on the light you must be in the lounge.")
+   where newState = updateRoom state Lounge (lounge {room_desc = litloungedesc})
 
 
 {-- Don't update the game state, just list what the player is carrying. --}

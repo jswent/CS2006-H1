@@ -15,6 +15,7 @@ type Action = Argument -> GameData -> (GameData, ReturnValue)
 {-- A required parameter for an Action. --}
 data Argument = ObjArg (WorldObject) 
               | DirArg (Direction)
+    deriving (Generic)
 
 {-- An alias for the message returned by actions, indicating success or failure. --}
 type ReturnValue = String
@@ -35,7 +36,7 @@ data Direction = North
                | West
                | Out
                | In
-    deriving (Eq, Show, Read)
+    deriving (Eq, Generic, Show, Read)
 
 
 
@@ -50,6 +51,7 @@ data GameData = GameData { location_id :: RoomID,      -- Where player is
                            light :: Bool               -- Light is on
                          }
     deriving (Generic)
+
 
 instance Show GameData where
     show game_data
@@ -68,13 +70,29 @@ instance ToJSON WorldObject where
 instance ToJSON Exit where
     -- No need to provide a toJSON implementation.
     toEncoding = genericToEncoding defaultOptions
+instance ToJSON RoomID where
+    -- No need to provide a toJSON implementation.
+    toEncoding = genericToEncoding defaultOptions
+instance ToJSON ObjectType where
+    -- No need to provide a toJSON implementation.
+    toEncoding = genericToEncoding defaultOptions
+instance ToJSON Direction where
+    -- No need to provide a toJSON implementation.
+    toEncoding = genericToEncoding defaultOptions
 instance FromJSON GameData
     -- No need to provide a parseJSON implementation.
 instance FromJSON Room
--- No need to provide a parseJSON implementation.
+    -- No need to provide a parseJSON implementation.
 instance FromJSON WorldObject
--- No need to provide a parseJSON implementation.
+    -- No need to provide a parseJSON implementation.
 instance FromJSON Exit
+    -- No need to provide a parseJSON implementation.
+instance FromJSON RoomID
+    -- No need to provide a parseJSON implementation.
+instance FromJSON ObjectType
+    -- No need to provide a parseJSON implementation.
+instance FromJSON Direction
+    -- No need to provide a parseJSON implementation.
 
 
 
@@ -85,8 +103,9 @@ data WorldObject = WorldObject { obj_name :: ObjectType,  -- The short name of t
                                  obj_desc :: String }     -- A description of the object
     deriving (Eq, Generic)
 
+
 data ObjectType = Mug | CoffeePot | Laptop
-    deriving (Eq)
+    deriving (Eq, Generic)
 
 
 instance Show WorldObject where
@@ -110,7 +129,7 @@ data Room = Room {  room_name :: RoomID,        -- The name of the room
     deriving (Eq, Generic)
 
 data RoomID = Bedroom | Kitchen | Hall | Street | Lounge
-    deriving (Eq, Show)
+    deriving (Eq, Generic, Show)
 
 
 instance Show Room where
