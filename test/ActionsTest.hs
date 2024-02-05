@@ -6,11 +6,10 @@ import Data.Maybe (isJust, isNothing)
 import Actions
 
 knownActions :: [String]
-knownActions = ["go", "get", "put", "examine"]
+knownActions = ["go", "get", "put", "examine", "drink"]
 
--- TODO: Update commands post-refactor 
 knownCommands :: [String]
-knownCommands = ["quit", "inventory"]
+knownCommands = ["press", "pour", "open", "quit", "inventory"]
 
 knownArguments :: [String]
 knownArguments = ["north", "east", "south", "west", "in", "out", "mug", "coffeepot", "laptop"]
