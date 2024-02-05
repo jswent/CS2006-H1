@@ -222,8 +222,8 @@ getAction (ObjArg user_object) = do
     currentRoom <- getRoom (location_id state)
     if objectHere user_object currentRoom then do
         let newRoom = removeObject user_object currentRoom
-        updateRoom (location_id state) newRoom  -- Directly use updateRoom
         addInv user_object                     -- Directly use addInv
+        updateRoom (location_id state) newRoom  -- Directly use updateRoom
         return "Item picked up successfully"
     else
         return "Item not in room"
