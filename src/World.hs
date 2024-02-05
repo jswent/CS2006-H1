@@ -4,13 +4,13 @@ module World where
 
 import GHC.Generics
 import Data.Aeson
-
+import Control.Monad.State
 
 
 
 {-- Action and Command --}
 {-- Actions are things which do something to an object and update the game state. --}
-type Action = Argument -> GameData -> (GameData, ReturnValue)
+type Action = Argument -> State GameData ReturnValue
 
 {-- A required parameter for an Action. --}
 data Argument = ObjArg (WorldObject) 
@@ -21,7 +21,7 @@ data Argument = ObjArg (WorldObject)
 type ReturnValue = String
 
 {-- Commands are things which just update game state. --}
-type Command = GameData -> (GameData, ReturnValue)
+type Command = State GameData ReturnValue
 
 {-- 
     A type to describe the direction of movement relative to the current position.

@@ -14,7 +14,8 @@ library
   build-depends:       base >= 4.14,
                        haskeline >= 0.8,
                        aeson,
-                       bytestring
+                       bytestring,
+                       mtl
   hs-source-dirs:      src
   default-language:    Haskell2010
 
@@ -24,6 +25,7 @@ executable haskell-p1
                        haskeline >= 0.8,
                        aeson,
                        bytestring,
+                       mtl,
                        Haskell-P1
   default-language:    Haskell2010
 
@@ -34,6 +36,7 @@ test-suite haskell-p1-test
   build-depends:       base,
                        haskeline,
                        QuickCheck,
+                       mtl,
                        Haskell-P1
   hs-source-dirs:      test
   default-language:    Haskell2010
