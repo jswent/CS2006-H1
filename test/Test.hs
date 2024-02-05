@@ -2,13 +2,10 @@ module Main where
 
 import Test.QuickCheck
 
-import System.Console.Haskeline
-
-import qualified WorldTest
-import qualified ActionsTest
-
-tests = do
-  outputStrLn "All tests passed"
+import WorldTest
+import ActionsTest
 
 main :: IO ()
-main = runInputT defaultSettings (tests) >> return ()
+main = do
+    putStrLn "Running ActionsTest"
+    runActionTests
