@@ -46,18 +46,6 @@ arguments _           = Nothing
 
 
 {-- 
-    (POTENTIALLY REDUNDANT)
-    
-    An alternative to "head", which will return the first element in 
-    a list if applicable, but instead of throwing an error when an 
-    empty list is passed in Nothing will be returned.
---}
-safeHead :: [a] -> Maybe a
-safeHead []       = Nothing
-safeHead (x : xs) = Just x
-
-
-{-- 
     Takes a Direction and the CURRENT room.
 
     Recurse through the "exit" values for the current room and search for an exit 
