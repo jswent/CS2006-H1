@@ -4,6 +4,7 @@ import World
 import Actions
 
 import Control.Monad
+import Control.Monad.State
 import System.IO
 import System.Exit
 import Control.Monad.IO.Class (liftIO)
@@ -47,49 +48,52 @@ stringToByteString = B.pack
     This is called once input has been received by "repl" so that the
     current state of the game can be updated accordingly.
 --}
-process :: GameData -> [String] -> (GameData, ReturnValue)
-process state [cmd,arg] = case actions cmd of  -- Check for action validity
-                            Just fn -> case arguments arg of
-                                        Just a -> fn a state
-                                        Nothing -> (state, "I don't understand")
-                            Nothing -> (state, "I don't understand")
-process state [cmd]     = case commands cmd of -- Check for command validity
-                            Just fn -> fn state
-                            Nothing -> (state, "I don't understand")
-process state _         = (state, "I don't understand")
-
+process :: [String] -> State GameData ReturnValue
+process [cmd, argStr] = case actions cmd of
+                          Just fn -> case arguments argStr of
+                                      Just arg -> fn arg
+                                      Nothing -> return "I don't understand"
+                          Nothing -> return "I don't understand"
+process [cmd] = case commands cmd of
+                  Just fn -> fn
+                  Nothing -> return "I don't understand"
+process _ = return "I don't understand"
 
 {-- This is the game loop. --}
-repl :: GameData -> InputT IO GameData
-repl state | finished state = return state
-repl state = do
-    outputStrLn ""
-    outputStrLn $ show state ++ "\n"
-    outputStr "What now? "
-    mcmd <- getInputLine ""
-    case mcmd of
-        Nothing -> return state  -- Handle end-of-input (e.g., EOF/Ctrl-D)
-        Just cmd -> do
-            if isSaveCommand cmd then do
-                liftIO $ writeFile (getFilePath cmd) (byteStringToString (encode state))
-                outputStrLn "Game saved successfully"
-                repl state
-            else if isLoadCommand cmd then do
-                newState <- handleLoad cmd
-                outputStrLn "Game Loaded successfully"
-                repl newState
-            else do
-                let (state', msg) = process state (words cmd)
-                outputStrLn msg
-                if won state'
-                    then do outputStrLn winmessage
-                            return state'
-                    else repl state'
-
+repl :: StateT GameData (InputT IO) ()
+repl = do
+    state <- get
+    if finished state
+        then return ()
+        else do
+            lift $ outputStrLn ""
+            lift $ outputStrLn $ show state ++ "\n"
+            lift $ outputStr "What now? "
+            mcmd <- lift $ getInputLine ""
+            case mcmd of
+                Nothing -> return ()  -- Handle end-of-input (e.g., EOF/Ctrl-D)
+                Just cmd ->
+                    if isSaveCommand cmd
+                        then do
+                            liftIO $ writeFile (getFilePath cmd) (byteStringToString (encode state))
+                            lift $ outputStrLn "Game saved successfully"
+                            repl
+                        else if isLoadCommand cmd
+                            then do
+                                newState <- lift $ handleLoad cmd
+                                lift $ outputStrLn "Game Loaded successfully"
+                                put newState
+                                repl
+                            else do
+                                let (msg, newState) = runState (process (words cmd)) state
+                                lift $ outputStrLn msg
+                                if won newState
+                                    then lift $ outputStrLn winmessage
+                                    else put newState >> repl
 
 {-- Make the initial call to the game loop using the GameData object created by "initState" (from "World.hs") --}
 main :: IO ()
-main = runInputT defaultSettings (repl initState) >> return ()
+main = runInputT defaultSettings $ evalStateT repl initState
 
 
 {-- INSERT HIGHLY INFORMATIVE COMMENT HERE --}

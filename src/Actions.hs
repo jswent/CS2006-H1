@@ -1,13 +1,16 @@
 module Actions where
 
+import Control.Monad
+import Control.Monad.State
+
 import World
 
 
 {-- Function that returns an Action based on user input. --}
 actions :: String -> Maybe Action
 actions "go"      = Just go
-actions "get"     = Just get
-actions "put"     = Just put
+actions "get"     = Just getAction
+actions "put"     = Just putAction
 -- actions "drop"    = Just drop      <- (DO WE STILL NEED THIS?)
 actions "pour"    = Just pour
 actions "examine" = Just examine
@@ -137,45 +140,53 @@ objectData user_object rm = findObj (obj_name user_object) (objects rm)
     Given a game state and a room id, replace the old room information with
     new data. If the room id does not already exist, add it.
 --}
-updateRoom :: GameData -> RoomID -> Room -> GameData
-updateRoom game_data room_id room_data
-    | length roomArr == 0 = game_data { world = (room_id, room_data) : world game_data }
-    | otherwise           = let newWorld = map (\tuple -> if (fst tuple) == room_id then (room_id, room_data) else tuple) (world game_data)
-                             in ( game_data { world = newWorld } )
-    where
-        roomArr = filter (\roomTuple -> fst roomTuple == room_id) (world game_data)
-
+updateRoom :: RoomID -> Room -> State GameData ()
+updateRoom room_id room_data = modify updateRoomData
+  where
+    updateRoomData game_data =
+        let roomArr = filter (\roomTuple -> fst roomTuple == room_id) (world game_data)
+            newWorld = if null roomArr
+                       then (room_id, room_data) : world game_data
+                       else map (\tuple -> if fst tuple == room_id then (room_id, room_data) else tuple) (world game_data)
+        in game_data { world = newWorld }
 
 {-- Given a RoomID, find the Room object with the corresponding ID value and return it --}
-getRoom :: RoomID -> GameData -> Room
-getRoom room_id game_data = let rooms = world game_data
-                              in snd $ head $ filter (\room -> fst room == room_id) rooms
-
+getRoom :: RoomID -> State GameData Room
+getRoom room_id = do
+    game_data <- get
+    let maybeRoom = lookup room_id (world game_data)
+    case maybeRoom of
+        Just room -> return room
+        Nothing -> error "Room not found"  -- or handle the error appropriately
 
 {-- 
     Given a game state and an object id, find the object in the current
     room and add it to the player's inventory 
     TODO: RE-WRITE WITH MAYBE   
 --}
-addInv :: GameData -> WorldObject -> GameData
-addInv game_data user_object = let room = getRoom (location_id game_data) game_data
-                                   object | objectHere user_object room = [objectData user_object room]
-                                          | otherwise              = []
-                                in ( game_data { inventory = inventory game_data ++ object } )
-
+addInv :: WorldObject -> State GameData ()
+addInv user_object = do
+    state <- get
+    currentRoom <- getRoom (location_id state)
+    when (objectHere user_object currentRoom) $ do
+        let newObject = objectData user_object currentRoom
+        modify (\s -> s { inventory = newObject : inventory s })
 
 {-- 
     Given a game state and an object id, remove the object from the
     inventory.
 --}
-removeInv :: GameData -> WorldObject -> GameData
-removeInv game_data user_object = 
-    game_data { inventory = filter (\obj -> obj_name obj /= obj_name user_object) (inventory game_data) }
+removeInv :: WorldObject -> State GameData ()
+removeInv user_object = modify removeInvFromState
+  where
+    removeInvFromState game_data =
+        game_data { inventory = filter (\obj -> obj_name obj /= obj_name user_object) (inventory game_data) }
 
 
 {-- Return True if the inventory in the game state contains the given object. --}
-carrying :: GameData -> WorldObject -> Bool
-carrying game_data user_object = any (\obj -> obj_name obj == obj_name user_object) (inventory game_data)
+carrying :: WorldObject -> GameData -> Bool
+carrying user_object game_data = 
+    any (\obj -> obj_name obj == obj_name user_object) (inventory game_data)
 
 
 {--
@@ -189,18 +200,15 @@ carrying game_data user_object = any (\obj -> obj_name obj == obj_name user_obje
     (kitchen,"OK")
 --}
 go :: Action
-go (DirArg direction) state | (newRoomMaybeStr == Nothing) = (state, "No room in that direction.")
-                            | otherwise                    = (newState, "OK")
-                            where
-                                currentRoom = getRoom (location_id state) state
-                                newRoomMaybeStr = move direction currentRoom
-                                newRoomStr = case newRoomMaybeStr of
-                                    Just value -> value
-                                    Nothing    -> room_name currentRoom
-                                newState = state {
-                                    location_id = newRoomStr
-                                }
-
+go (DirArg direction) = do
+    state <- get
+    currentRoom <- getRoom (location_id state)
+    let newRoomMaybe = move direction currentRoom
+    case newRoomMaybe of
+        Just newRoom -> do
+            modify (\s -> s { location_id = newRoom })
+            return "OK"
+        Nothing -> return "No room in that direction."
 
 {-- 
     Remove an item from the current room, and put it in the player's inventory.
@@ -208,31 +216,34 @@ go (DirArg direction) state | (newRoomMaybeStr == Nothing) = (state, "No room in
     and 'removeObject' to remove the object, and 'updateRoom' to replace the
     room in the game state with the new room which doesn't contain the object.
 --}
-get :: Action
-get (ObjArg user_object) state
-      | objectHere user_object room = (newState, "Item picked up successfully")
-      | otherwise                   = (state, "Item not in room")
-      where 
-         room = getRoom (location_id state) state
-         newRoom = removeObject user_object room
-         newState = updateRoom (addInv state user_object) (location_id state) newRoom
-
+getAction :: Action
+getAction (ObjArg user_object) = do
+    state <- get
+    currentRoom <- getRoom (location_id state)
+    if objectHere user_object currentRoom then do
+        let newRoom = removeObject user_object currentRoom
+        updateRoom (location_id state) newRoom  -- Directly use updateRoom
+        addInv user_object                     -- Directly use addInv
+        return "Item picked up successfully"
+    else
+        return "Item not in room"
 
 {-- 
     Remove an item from the player's inventory, and put it in the current room.
-    Similar to 'get' but in reverse - find the object in the inventory, create
+    Similar to 'getAction' but in reverse - find the object in the inventory, create
     a new room with the object in, update the game world with the new room.
 --}
-put :: Action
-put (ObjArg user_object) state 
-      | carrying state user_object = (newState, "Item put down successfully")
-      | otherwise                  = (state, "Item not in inventory")
-      where 
-         room = getRoom (location_id state) state
-         object = findObj (obj_name user_object) (inventory state)
-         newRoom = addObject object room
-         newState = updateRoom (removeInv state user_object) (location_id state) newRoom
-
+putAction :: Action
+putAction (ObjArg user_object) = do
+    state <- get
+    if carrying user_object state then do
+        currentRoom <- getRoom (location_id state)
+        let newRoom = addObject user_object currentRoom
+        updateRoom (location_id state) newRoom  -- Directly use updateRoom
+        removeInv user_object                   -- Directly use removeInv
+        return "Item put down successfully"
+    else
+        return "Item not in inventory"
 
 {-- 
     Don't update the state, just return a message giving the full description
@@ -240,14 +251,16 @@ put (ObjArg user_object) state
     inventory!
 --}
 examine :: Action
-examine (ObjArg user_object) state 
-      | objectHere user_object rm || carrying state user_object = (state, obj_longname object ++ ": " ++ obj_desc object)
-      where
-         rm = getRoom (location_id state) state
-         object = if objectHere user_object rm 
-                  then objectData user_object rm
-                  else findObj (obj_name user_object) (inventory state)
-
+examine (ObjArg user_object) = do
+    state <- get
+    currentRoom <- getRoom (location_id state)
+    if objectHere user_object currentRoom || carrying user_object state then
+        let object = if objectHere user_object currentRoom
+                     then objectData user_object currentRoom
+                     else findObj (obj_name user_object) (inventory state)
+        in return $ obj_longname object ++ ": " ++ obj_desc object
+    else
+        return "The object is neither in the room nor in your inventory."
 
 {-- 
     Pour the coffee. Obviously, this should only work if the player is carrying
@@ -255,16 +268,16 @@ examine (ObjArg user_object) state
     object in the player's inventory to be a new object, a "full mug".
 --}
 pour :: Action
-pour _ state
-      | carrying state coffeepot && carrying state mug && not (poured state) = (newState, "Coffee mug is now full and ready to drink")
-      | carrying state coffeepot && carrying state mug = (state, "Coffee mug is already full and ready to drink")
-      | otherwise = (state, "Cannot pour coffee until you have both the coffee pot and a mug in your inventory")
-      where
-         newInventory = fullmug : (filter (\obj -> obj_name obj /= Mug) (inventory state)) -- Check that fullmug wasn't mug
-         newState = state { 
-            inventory = newInventory,
-            poured = True
-         }
+pour _ = do
+    state <- get
+    if carrying coffeepot state && carrying mug state && not (poured state) then do
+        let newInventory = fullmug : filter (\obj -> obj_name obj /= Mug) (inventory state)
+        put $ state { inventory = newInventory, poured = True }
+        return "Coffee mug is now full and ready to drink"
+    else if carrying coffeepot state && carrying mug state then
+        return "Coffee mug is already full and ready to drink"
+    else
+        return "Cannot pour coffee until you have both the coffee pot and a mug in your inventory"
 
 {-- 
     Drink the coffee. This should only work if the player has a full coffee 
@@ -274,17 +287,14 @@ pour _ state
     Also, put the empty coffee mug back in the inventory!
 --}
 drink :: Action
-drink (ObjArg object) state
-      | carrying state mug && (poured state) = (newState, "Coffee has been drunk and you are now caffeinated")
-      | otherwise                            = (state, "To drink the coffee you must have a full mug of coffee in your inventory")
-      where
-         newInventory = mug : (filter (\obj -> obj_name obj /= Mug) (inventory state))
-         newState = state { 
-            inventory = newInventory,
-            caffeinated = True,
-            poured = False
-         }
-
+drink (ObjArg object) = do
+    state <- get
+    if carrying mug state && (poured state) then do
+        let newInventory = mug : filter (\obj -> obj_name obj /= Mug) (inventory state)
+        put $ state { inventory = newInventory, caffeinated = True, poured = False }
+        return "Coffee has been drunk and you are now caffeinated"
+    else
+        return "To drink the coffee you must have a full mug of coffee in your inventory"
 
 {-- 
     Open the door. Only allowed if the player has had coffee! 
@@ -295,35 +305,40 @@ drink (ObjArg object) state
     'openedhall' and 'openedexits' from World.hs for this.
 --}
 open :: Action
-open _ state -- Must be in Hall
-      | caffeinated state && (location_id state) == Hall = (newState, "Door has been opened to the street!")
-      | otherwise                                        = (state, "You are too sleepy. To open the door you must have drunk a mug of coffee.")
-      where
-          newHall = hall {  room_desc = openedhall,
-                            exits = openedexits    }
-          newState = (updateRoom state Hall newHall)
-      
+open _ = do
+    state <- get
+    if caffeinated state && (location_id state) == Hall then do
+        let newHall = hall { room_desc = openedhall, exits = openedexits }
+        updateRoom Hall newHall
+        return "Door has been opened to the street!"
+    else
+        return "You are too sleepy. To open the door you must have drunk a mug of coffee."
 
 {--
     Press the light switch. Only allowed when player is in the lounge.
     This will allow players to see where they are going.
 --}
 press :: Action
-press _ state
-   | (location_id state) == Lounge = (newState {light = True}, "Light is switched on.")
-   | otherwise                     = (state, "To turn on the light you must be in the lounge.")
-   where newState = updateRoom state Lounge (lounge {room_desc = litloungedesc})
-
+press _ = do
+    state <- get
+    if (location_id state) == Lounge then do
+        put $ state { light = True }
+        return "Light is switched on."
+    else
+        return "To turn on the light you must be in the lounge."
 
 {-- Don't update the game state, just list what the player is carrying. --}
 inv :: Command
-inv state = (state, showInv (inventory state))
-   where showInv [] = "You aren't carrying anything"
-         showInv xs = "You are carrying:\n" ++ showInv' xs
-         showInv' [x] = obj_longname x
-         showInv' (x:xs) = obj_longname x ++ "\n" ++ showInv' xs
-
+inv = do
+    state <- get
+    return $ showInv (inventory state)
+    where showInv [] = "You aren't carrying anything"
+          showInv xs = "You are carrying:\n" ++ showInv' xs
+          showInv' [x] = obj_longname x
+          showInv' (x:xs) = obj_longname x ++ "\n" ++ showInv' xs
 
 {-- End the game loop and display a message to the player. --}
 quit :: Command
-quit state = (state { finished = True }, "Bye bye")
+quit = do
+    modify (\s -> s { finished = True })
+    return "Bye bye"
