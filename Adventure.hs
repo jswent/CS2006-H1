@@ -19,7 +19,7 @@ winmessage = "Congratulations, you have made it out of the house.\n" ++
 {-- Checks if an input begins with the word "save". --}
 isSaveCommand :: String -> Bool
 isSaveCommand input = case input of
-    's':'a':'v':'e':' ':_ -> True
+    's':'a':'v':'e':_ -> True
     _ -> False
 
 
@@ -112,4 +112,4 @@ handleLoad str =
 getFilePath :: String -> String
 getFilePath xs
   | length xs > 5 = drop 5 xs
-  | otherwise     = "file" --Default FilePath
+  | otherwise     = "defaultfile.json" --Default FilePath
