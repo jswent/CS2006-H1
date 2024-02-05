@@ -129,7 +129,7 @@ data Room = Room {  room_name :: RoomID,        -- The name of the room
     deriving (Eq, Generic)
 
 data RoomID = Bedroom | Kitchen | Hall | Street | Lounge
-    deriving (Eq, Generic, Show)
+    deriving (Eq, Generic, Show, Read)
 
 
 instance Show Room where

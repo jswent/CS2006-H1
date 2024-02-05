@@ -12,16 +12,16 @@ actions "go"      = Just go
 actions "get"     = Just getAction
 actions "put"     = Just putAction
 -- actions "drop"    = Just drop      <- (DO WE STILL NEED THIS?)
-actions "pour"    = Just pour
 actions "examine" = Just examine
 actions "drink"   = Just drink
-actions "open"    = Just open
-actions "press"   = Just press
 actions _         = Nothing
 
 
 {-- Function that returns a Command based on user input. --}
 commands :: String -> Maybe Command
+commands "pour"      = Just pour
+commands "open"      = Just open
+commands "press"     = Just press
 commands "quit"      = Just quit
 commands "inventory" = Just inv
 commands _           = Nothing
@@ -46,18 +46,6 @@ arguments "mug"       = Just (ObjArg mug)
 arguments "coffeepot" = Just (ObjArg coffeepot)
 arguments "laptop"    = Just (ObjArg laptop)
 arguments _           = Nothing
-
-
-{-- 
-    (POTENTIALLY REDUNDANT)
-    
-    An alternative to "head", which will return the first element in 
-    a list if applicable, but instead of throwing an error when an 
-    empty list is passed in Nothing will be returned.
---}
-safeHead :: [a] -> Maybe a
-safeHead []       = Nothing
-safeHead (x : xs) = Just x
 
 
 {-- 
@@ -267,8 +255,8 @@ examine (ObjArg user_object) = do
     both the pot and the mug. This should update the status of the "mug"
     object in the player's inventory to be a new object, a "full mug".
 --}
-pour :: Action
-pour _ = do
+pour :: Command
+pour = do
     state <- get
     if carrying coffeepot state && carrying mug state && not (poured state) then do
         let newInventory = fullmug : filter (\obj -> obj_name obj /= Mug) (inventory state)
@@ -296,6 +284,35 @@ drink (ObjArg object) = do
     else
         return "To drink the coffee you must have a full mug of coffee in your inventory"
 
+{--
+    Press the light switch. Only allowed when player is in the lounge.
+    This will allow players to see where they are going.
+--}
+press :: Command
+press state
+   | (location_id state) == Lounge = (newState {light = True}, "Light is switched on.")
+   | otherwise                     = (state, "To turn on the light you must be in the lounge.")
+   where newState = updateRoom state Lounge (lounge {room_desc = litloungedesc})
+
+
+{-- 
+    Pour the coffee. Obviously, this should only work if the player is carrying
+    both the pot and the mug. This should update the status of the "mug"
+    object in the player's inventory to be a new object, a "full mug".
+--}
+pour :: Command
+pour state
+      | carrying state coffeepot && carrying state mug && not (poured state) = (newState, "Coffee mug is now full and ready to drink")
+      | carrying state coffeepot && carrying state mug = (state, "Coffee mug is already full and ready to drink")
+      | otherwise = (state, "Cannot pour coffee until you have both the coffee pot and a mug in your inventory")
+      where
+         newInventory = fullmug : (filter (\obj -> obj_name obj /= Mug) (inventory state)) -- Check that fullmug wasn't mug
+         newState = state { 
+            inventory = newInventory,
+            poured = True
+         }
+
+
 {-- 
     Open the door. Only allowed if the player has had coffee! 
     This should change the description of the hall to say that the door is open,
@@ -304,8 +321,8 @@ drink (ObjArg object) = do
     Use 'updateRoom' once you have made a new description. You can use 
     'openedhall' and 'openedexits' from World.hs for this.
 --}
-open :: Action
-open _ = do
+open :: Command
+open = do
     state <- get
     if caffeinated state && (location_id state) == Hall then do
         let newHall = hall { room_desc = openedhall, exits = openedexits }
@@ -318,8 +335,8 @@ open _ = do
     Press the light switch. Only allowed when player is in the lounge.
     This will allow players to see where they are going.
 --}
-press :: Action
-press _ = do
+press :: Command
+press = do
     state <- get
     if (location_id state) == Lounge then do
         put $ state { light = True }
