@@ -65,7 +65,7 @@ repl state | finished state = return state
 repl state = do
     outputStrLn ""
     outputStrLn $ show state ++ "\n"
-    outputStr "What now? "
+    outputStr "> What now? "
     mcmd <- getInputLine ""
     case mcmd of
         Nothing -> return state  -- Handle end-of-input (e.g., EOF/Ctrl-D)
