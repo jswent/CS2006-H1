@@ -9,3 +9,5 @@ main :: IO ()
 main = do
     putStrLn "Running ActionsTest"
     runActionTests
+    putStrLn "Running WorldTest"
+    runWorldTest
