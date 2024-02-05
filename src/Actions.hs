@@ -11,7 +11,7 @@ actions :: String -> Maybe Action
 actions "go"      = Just go
 actions "get"     = Just getAction
 actions "put"     = Just putAction
--- actions "drop"    = Just drop      <- (DO WE STILL NEED THIS?)
+-- actions "drop"    = Just drop      <- (DO WE STILL NEED THIS?) (Dont think so - Rory)
 actions "examine" = Just examine
 actions "drink"   = Just drink
 actions _         = Nothing
@@ -23,6 +23,7 @@ commands "pour"      = Just pour
 commands "open"      = Just open
 commands "press"     = Just press
 commands "quit"      = Just quit
+commands "shower"    = Just shower
 commands "inventory" = Just inv
 commands _           = Nothing
 
@@ -45,6 +46,7 @@ arguments "mug"       = Just (ObjArg mug)
 -- arguments "fullmug"   = Just (ObgArg fullmug)   <- (DO WE STILL NEED THIS?)
 arguments "coffeepot" = Just (ObjArg coffeepot)
 arguments "laptop"    = Just (ObjArg laptop)
+arguments "beer"      = Just (ObjArg beer)
 arguments _           = Nothing
 
 
@@ -277,12 +279,16 @@ pour = do
 drink :: Action
 drink (ObjArg object) = do
     state <- get
-    if carrying mug state && (poured state) then do
+    if carrying mug state && (poured state) && object == mug then do
         let newInventory = mug : filter (\obj -> obj_name obj /= Mug) (inventory state)
-        put $ state { inventory = newInventory, caffeinated = True, poured = False }
+        put $ state { inventory = newInventory, caffeinated = True, poured = False, drunk = False }
         return "Coffee has been drunk and you are now caffeinated"
+    else if carrying beer state && object == beer then do
+        let newInventory = filter(\obj -> obj_name obj /= Beer) (inventory state)
+        put $ state {inventory = newInventory, drunk =  True}
+        return "Beer has been drunk and you are now pissed. You must have a coffee again to sober up"
     else
-        return "To drink the coffee you must have a full mug of coffee in your inventory"
+        return "To drink you must have a full mug of coffee or a beer in your inventory"
 
 {-- 
     Open the door. Only allowed if the player has had coffee! 
@@ -314,6 +320,21 @@ press = do
         return "Light is switched on."
     else
         return "To turn on the light you must be in the lounge."
+
+shower :: Command
+shower = do
+    state <- get
+    let newBathroom = bathroom {
+            room_desc = bathroomShoweredDesc
+    }
+    if (location_id state) == Bathroom && not (showered state) then do
+        put $ state { showered = True }
+        updateRoom Bathroom newBathroom
+        return "You took a shower"
+    else if (location_id state) == Bathroom && (showered state) then do
+        return "You have already showered this morning"
+    else return "To take a shower you must be in your bathroom"
+        
 
 {-- Don't update the game state, just list what the player is carrying. --}
 inv :: Command
