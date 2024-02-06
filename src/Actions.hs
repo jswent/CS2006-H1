@@ -19,8 +19,9 @@ commands :: String -> Maybe Command
 commands "pour"      = Just pour
 commands "open"      = Just open
 commands "press"     = Just press
-commands "quit"      = Just quit
 commands "inventory" = Just inv
+commands "help"      = Just help
+commands "quit"      = Just quit
 commands _           = Nothing
 
 
@@ -310,6 +311,39 @@ inv state = (state, showInv (inventory state))
          showInv xs = "You are carrying:\n" ++ showInv' xs
          showInv' [x] = obj_longname x
          showInv' (x:xs) = obj_longname x ++ "\n" ++ showInv' xs
+
+
+{-- Display a help message to the user, taking into account the current items they have and the tasks they need to complete --}
+help :: Command
+help state = 
+
+
+helpMessage = "----- Haskell-P1 -----
+               ACTIONS:
+                 go      [Direction]
+                 get     [Object]
+                 put     [Object]
+                 examine [Object]
+                 drink   [Object]
+                 
+               COMMANDS:
+                 pour
+                 open
+                 press
+                 inventory
+                 help
+                 quit
+                 
+               OBJECTS:
+                 mug
+                 
+               DIRECTIONS:
+                 north
+                 east
+                 south
+                 west
+                 in
+                 out" 
 
 
 {-- End the game loop and display a message to the player. --}
