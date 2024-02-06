@@ -315,8 +315,12 @@ inv = do
     state <- get
     return $ showInv (inventory state)
     where showInv [] = "You aren't carrying anything"
-          showInv xs = "You are carrying:\n" ++ intercalate "\n" (map obj_longname xs) -- more idiomatic, but let's use `foldr` as provided.
-          -- showInv xs = "You are carrying:\n" ++ foldr (\x acc -> obj_longname x ++ "\n" ++ acc) "" xs
+          showInv xs = "You are carrying:\n" ++ intercalate "\n" (map obj_longname xs) -- more idiomatic
+          {-- This is the only way I could figure out how to use foldr without printing an additional newline, pretty ugly. --}
+          -- showInv xs = "You are carrying:\n" ++ foldr appendItem "" xs
+          -- appendItem item acc 
+          --   | null acc  = obj_longname item
+          --   | otherwise = obj_longname item ++ "\n" ++ acc
 
 {-- End the game loop and display a message to the player. --}
 quit :: Command
