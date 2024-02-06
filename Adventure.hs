@@ -70,16 +70,16 @@ repl state = do
     case mcmd of
         Nothing -> return state  -- Handle end-of-input (e.g., EOF/Ctrl-D)
         Just cmd -> do
-            if isSaveCommand cmd then do
+            if isSaveCommand cmd then do  -- Check if the user is requesting that current game progress is exported to a JSON file
                 liftIO $ writeFile (getFilePath cmd) (byteStringToString (encode state))
                 outputStrLn "Game saved successfully"
                 repl state
-            else if isLoadCommand cmd then do
+            else if isLoadCommand cmd then do  -- Check if the user is requesting that game progress from a previous game is loaded from an existing JSON file
                 newState <- handleLoad cmd
                 outputStrLn "Game Loaded successfully"
                 repl newState
-            else do
-                let (state', msg) = process state (words cmd)
+            else do  -- Process the user's input
+                let (state', msg) = process state (words cmd)  -- Pass the current game state and the user's command to "process"
                 outputStrLn msg
                 if won state'
                     then do outputStrLn winmessage
