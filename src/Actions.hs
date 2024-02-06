@@ -3,6 +3,9 @@ module Actions where
 import Control.Monad
 import Control.Monad.State
 
+import Data.List
+import Data.Maybe (listToMaybe)
+
 import World
 
 
@@ -69,9 +72,8 @@ arguments _           = Nothing
     Nothing
 --}
 move :: Direction -> Room -> Maybe RoomID
-move direction (Room _         _ []           _) = Nothing
-move direction (Room room_type a (exit:exits) b) | (exit_dir exit == direction) = Just $ room exit
-                                                 | otherwise                    = move direction (Room room_type a exits b)
+move dir rm = fmap room . listToMaybe $ filter (\exit -> exit_dir exit == dir) (exits rm)
+
                                                  
 -- WE NEED TO DECIDE BETWEEN THE ABOVE VERSION AND THE BELOW VERSION OF "move". WHICH IS MORE IDIOMATIC?
 -- THE VERSION BELOW DOES USE FILTER, BUT AT THE COST OF READABILITY?
@@ -91,11 +93,7 @@ objectHere user_object room = any (\obj -> (obj_name obj) == (obj_name user_obje
     without that object. 
 --}
 removeObject :: WorldObject -> Room -> Room
-removeObject user_object room = 
-   let 
-      objs = objects room
-      new_objs = filter (\obj -> obj_name obj /= obj_name user_object) objs
-   in (room {objects = new_objs})
+removeObject user_object room = room { objects = filter ((/= obj_name user_object) . obj_name) (objects room)}
 
 
 {--
@@ -131,12 +129,8 @@ objectData user_object rm = findObj (obj_name user_object) (objects rm)
 updateRoom :: RoomID -> Room -> State GameData ()
 updateRoom room_id room_data = modify updateRoomData
   where
-    updateRoomData game_data =
-        let roomArr = filter (\roomTuple -> fst roomTuple == room_id) (world game_data)
-            newWorld = if null roomArr
-                       then (room_id, room_data) : world game_data
-                       else map (\tuple -> if fst tuple == room_id then (room_id, room_data) else tuple) (world game_data)
-        in game_data { world = newWorld }
+    updateRoomData game_data = game_data { world = map updateRoomInWorld (world game_data) }
+    updateRoomInWorld tuple@(id, room) = if id == room_id then (room_id, room_data) else tuple
 
 {-- Given a RoomID, find the Room object with the corresponding ID value and return it --}
 getRoom :: RoomID -> State GameData Room
@@ -321,9 +315,8 @@ inv = do
     state <- get
     return $ showInv (inventory state)
     where showInv [] = "You aren't carrying anything"
-          showInv xs = "You are carrying:\n" ++ showInv' xs
-          showInv' [x] = obj_longname x
-          showInv' (x:xs) = obj_longname x ++ "\n" ++ showInv' xs
+          showInv xs = "You are carrying:\n" ++ intercalate "\n" (map obj_longname xs) -- more idiomatic, but let's use `foldr` as provided.
+          -- showInv xs = "You are carrying:\n" ++ foldr (\x acc -> obj_longname x ++ "\n" ++ acc) "" xs
 
 {-- End the game loop and display a message to the player. --}
 quit :: Command
