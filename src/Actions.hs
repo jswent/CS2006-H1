@@ -26,7 +26,7 @@ commands "pour"      = Just pour
 commands "open"      = Just open
 commands "press"     = Just press
 commands "inventory" = Just inv
-commands "help"      = Just help
+-- commands "help"      = Just help
 commands "quit"      = Just quit
 commands _           = Nothing
 
@@ -320,36 +320,38 @@ inv = do
           -- showInv xs = "You are carrying:\n" ++ foldr (\x acc -> obj_longname x ++ "\n" ++ acc) "" xs
 
 {-- Display a help message to the user, taking into account the current items they have and the tasks they need to complete --}
-help :: Command
-help state = 
+help :: String -> IO ()
+help state = do
+    putStrLn helpMessage
+    return "-----\n"
 
 
-helpMessage = "----- Haskell-P1 -----
-               ACTIONS:
-                 go      [Direction]
-                 get     [Object]
-                 put     [Object]
-                 examine [Object]
-                 drink   [Object]
-                 
-               COMMANDS:
-                 pour
-                 open
-                 press
-                 inventory
-                 help
-                 quit
-                 
-               OBJECTS:
-                 mug
-                 
-               DIRECTIONS:
-                 north
-                 east
-                 south
-                 west
-                 in
-                 out" 
+helpMessage = "----- Haskell-P1 -----\n" ++
+              "ACTIONS:\n" ++
+              "   go      [Direction]\n" ++
+              "  get     [Object]\n" ++
+              "  put     [Object]\n" ++
+              "  examine [Object]\n" ++
+              "  drink   [Object]\n" ++
+              "\n" ++
+              "COMMANDS:\n" ++
+              "  pour\n" ++
+              "  open\n" ++
+              "  press\n" ++
+              "  inventory\n" ++
+              "  help\n" ++
+              "  quit\n" ++
+              "\n" ++
+              "OBJECTS:\n" ++
+              "  mug\n" ++
+              "\n" ++
+              "DIRECTIONS:\n" ++
+              "  north\n" ++
+              "  east\n" ++
+              "  south\n" ++
+              "  west\n" ++
+              "  in\n" ++
+              "  out" 
 
 
 {-- End the game loop and display a message to the player. --}
