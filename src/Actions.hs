@@ -141,7 +141,7 @@ getRoom room_id = do
     let maybeRoom = lookup room_id (world game_data)
     case maybeRoom of
         Just room -> return room
-        Nothing -> error "Room not found"  -- or handle the error appropriately
+        Nothing -> error "- Room not found -"  -- or handle the error appropriately
 
 {-- 
     Given a game state and an object id, find the object in the current
@@ -192,7 +192,7 @@ go (DirArg direction) = do
         Just newRoom -> do
             modify (\s -> s { location_id = newRoom })
             return "--- OK ---"
-        Nothing -> return "- No room in that direction."
+        Nothing -> return "- No room in that direction. -"
 
 {-- 
     Remove an item from the current room, and put it in the player's inventory.
@@ -210,7 +210,7 @@ getAction (ObjArg user_object) = do
         updateRoom (location_id state) newRoom  -- Directly use updateRoom
         return "--- Item picked up successfully ---"
     else
-        return "- Item not in room"
+        return "- Item not in room -"
 
 {-- 
     Remove an item from the player's inventory, and put it in the current room.
@@ -227,7 +227,7 @@ putAction (ObjArg user_object) = do
         removeInv user_object                   -- Directly use removeInv
         return "--- Item put down successfully ---"
     else
-        return "- Item not in inventory"
+        return "- Item not in inventory -"
 
 {-- 
     Don't update the state, just return a message giving the full description
@@ -244,7 +244,7 @@ examine (ObjArg user_object) = do
                      else findObj (obj_name user_object) (inventory state)
         in return $ obj_longname object ++ ": " ++ obj_desc object
     else
-        return "- The object is neither in the room nor in your inventory."
+        return "- The object is neither in the room nor in your inventory. -"
 
 {-- 
     Pour the coffee. Obviously, this should only work if the player is carrying
@@ -259,9 +259,9 @@ pour = do
         put $ state { inventory = newInventory, poured = True }
         return "--- Coffee mug is now full and ready to drink ---"
     else if carrying coffeepot state && carrying mug state then
-        return "- Coffee mug is already full and ready to drink"
+        return "- Coffee mug is already full and ready to drink -"
     else
-        return "- Cannot pour coffee until you have both the coffee pot and a mug in your inventory"
+        return "- Cannot pour coffee until you have both the coffee pot and a mug in your inventory -"
 
 {-- 
     Drink the coffee. This should only work if the player has a full coffee 
@@ -285,7 +285,7 @@ drink (ObjArg object) = do
         put $ state {inventory = newInventory, drunk =  True}
         return "--- Beer has been drunk and you are now intoxicated. You must have a coffee again to sober up ---"
     else
-        return "- To drink you must have a full mug of coffee or a beer in your inventory"
+        return "- To drink you must have a full mug of coffee or a beer in your inventory -"
 
 {-- 
     Open the door. Only allowed if the player has had coffee! 
@@ -302,8 +302,10 @@ open = do
         let newHall = hall { room_desc = openedhall, exits = openedexits }
         updateRoom Hall newHall
         return "--- Door has been opened to the street! ---"
+    else if caffeinated state then do  -- The user is not in the Hall at this point
+        return "- You must be in the hall to open the door. -"
     else
-        return "- You are too sleepy. To open the door you must have drunk a mug of coffee."
+        return "- You are too sleepy. To open the door you must have drunk a mug of coffee. -"
 
 {--
     Press the light switch. Only allowed when player is in the lounge.
@@ -320,7 +322,7 @@ press = do
         updateRoom Lounge newLounge
         return "--- Light is switched on. ---"
     else
-        return "- To turn on the light you must be in the lounge."
+        return "- To turn on the light you must be in the lounge. -"
 
 {-- Take a shower. This will allow players to go to their lectures and must be done to finish the game
     To take a shower you must be in the bathroom --}
@@ -335,8 +337,8 @@ shower = do
         updateRoom Bathroom newBathroom
         return "--- You took a shower ---"
     else if location_id state == Bathroom && showered state then do
-        return "- You have already showered this morning"
-    else return "- To take a shower you must be in your bathroom"
+        return "- You have already showered this morning -"
+    else return "- To take a shower you must be in your bathroom -"
 
 
 {-- Don't update the game state, just list what the player is carrying. --}
@@ -344,7 +346,7 @@ inv :: Command
 inv = do
     state <- get
     return $ showInv (inventory state)
-    where showInv [] = "- You aren't carrying anything"
+    where showInv [] = "- You aren't carrying anything -"
           showInv xs = "--- You are carrying:\n" ++ intercalate "\n" (map obj_longname xs) -- more idiomatic
           {-- This is the only way I could figure out how to use foldr without printing an additional newline, pretty ugly. --}
           -- showInv xs = "You are carrying:\n" ++ foldr appendItem "" xs

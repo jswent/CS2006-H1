@@ -52,12 +52,12 @@ process :: [String] -> State GameData ReturnValue
 process [cmd, argStr] = case actions cmd of
                           Just fn -> case arguments argStr of
                                       Just arg -> fn arg
-                                      Nothing -> return "- I don't understand"
-                          Nothing -> return "- I don't understand"
+                                      Nothing -> return "- I don't understand -"
+                          Nothing -> return "- I don't understand -"
 process [cmd] = case commands cmd of
                   Just fn -> fn
-                  Nothing -> return "- I don't understand"
-process _ = return "- I don't understand"
+                  Nothing -> return "- I don't understand -"
+process _ = return "- I don't understand -"
 
 {-- This is the game loop. --}
 repl :: StateT GameData (InputT IO) ()
@@ -80,14 +80,14 @@ repl = do
                             -- write encoded JSON to file
                             liftIO $ writeFile (getFilePath cmd) (byteStringToString (encode state))
                             --display message and go back to the start of the game loop
-                            lift $ outputStrLn "Game saved successfully"
+                            lift $ outputStrLn "--- Game saved successfully ---"
                             repl
                         else if isLoadCommand cmd
                             --Load game
                             then do
                                 newState <- lift $ handleLoad cmd
                                 --display message and go back to the start of the game loop
-                                lift $ outputStrLn "Game Loaded successfully"
+                                lift $ outputStrLn "--- Game Loaded successfully ---"
                                 put newState
                                 repl
                             else do  -- Process the user's input
@@ -114,7 +114,7 @@ handleLoad str =
     -- Decode the ByteString into a GameData value
     let newState = case decode newStateBString of
           Just gd -> gd
-          Nothing -> error "Failed to decode GameData"
+          Nothing -> error "- Failed to decode GameData -"
     return newState
 
 
