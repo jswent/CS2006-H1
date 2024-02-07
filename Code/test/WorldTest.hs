@@ -4,8 +4,8 @@ import Test.QuickCheck
 import World 
 
 -- List of all properties
-properties :: [(String, Property)]
-properties = [ ("prop_won", prop_won)
+worldProperties :: [(String, Property)]
+worldProperties = [ ("prop_won", prop_won)
              , ("prop_notWon", prop_notWon)
              ]
 
@@ -13,7 +13,7 @@ properties = [ ("prop_won", prop_won)
 runWorldTest :: IO ()
 runWorldTest = mapM_ (\(name, prop) -> do
     putStrLn ("Running " ++ name)
-    quickCheck prop) properties
+    quickCheck prop) worldProperties
 
 -- Define arbitrary GameData
 instance Arbitrary GameData where
