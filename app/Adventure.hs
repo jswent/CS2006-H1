@@ -85,36 +85,6 @@ processParser parsed = case parsed of
 
 {-- This is the game loop. --}
 repl :: StateT GameData (InputT IO) ()
--- repl = do
---     state <- get
---     if finished state
---         then return ()
---         else do
---             lift $ outputStrLn ""
---             lift $ outputStrLn $ show state ++ "\n"
---             lift $ outputStr "What now? "
---             mcmd <- lift $ getInputLine ""
---             case mcmd of
---                 Nothing -> return ()  -- Handle end-of-input (e.g., EOF/Ctrl-D)
---                 Just cmd
---                     | isSaveCommand cmd -> do
---                         liftIO $ writeFile (getFilePath cmd) (byteStringToString (encode state))
---                         lift $ outputStrLn "Game saved successfully"
---                         repl
---                     | isLoadCommand cmd -> do
---                         newState <- lift $ handleLoad cmd
---                         lift $ outputStrLn "Game Loaded successfully"
---                         put newState
---                         repl
---                     | otherwise -> case parse commandParser cmd of
---                         [(result, "")] -> do  -- Ensure entire input is consumed
---                             newState <- gets (execState result)
---                             put newState
---                             lift $ outputStrLn "Action completed."
---                             unless (finished newState) repl
---                         _ -> do
---                             lift $ outputStrLn "I don't understand"
---                             repl
 repl = do
     state <- get
     if finished state
