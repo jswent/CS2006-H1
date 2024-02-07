@@ -368,6 +368,9 @@ helpMessage = "----- Haskell-P1 -----\n" ++
               "\n" ++
               "OBJECTS:\n" ++
               "  mug\n" ++
+              "  coffeepot\n" ++
+              "  laptop\n" ++
+              "  beer\n" ++
               "\n" ++
               "DIRECTIONS:\n" ++
               "  north\n" ++
