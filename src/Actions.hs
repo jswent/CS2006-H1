@@ -350,27 +350,27 @@ help = do
     return helpMessage
 
 helpMessage :: ReturnValue
-helpMessage = "----- Haskell-P1 -----\n" ++
+helpMessage = "\n----- Haskell-P1 -----\n" ++
               "ACTIONS:\n" ++
-              "  go      [Direction]\n" ++
-              "  get     [Object]\n" ++
-              "  put     [Object]\n" ++
-              "  examine [Object]\n" ++
-              "  drink   [Object]\n" ++
+              "  go      [Direction] (Move in the specified direction, if applicable)\n" ++
+              "  get     [Object]    (Pick up an object)\n" ++
+              "  put     [Object]    (Put down an object)\n" ++
+              "  examine [Object]    (Examine an object)\n" ++
+              "  drink   [Object]    (Consume a drinkable object)\n" ++
               "\n" ++
               "COMMANDS:\n" ++
-              "  pour\n" ++
-              "  open\n" ++
-              "  press\n" ++
-              "  inventory\n" ++
-              "  help\n" ++
-              "  quit\n" ++
+              "  pour      (Pour coffee from the \"coffeepot\" into the \"mug\")\n" ++
+              "  open      (Open the door in the Hall leading to the Street)\n" ++
+              "  press     (Press the light switch in the Lounge to turn on the lights)\n" ++
+              "  inventory (Get a list of all objects in your inventory))\n" ++
+              "  help      (Print this message)\n" ++
+              "  quit      (Exit the game)\n" ++
               "\n" ++
               "OBJECTS:\n" ++
-              "  mug\n" ++
-              "  coffeepot\n" ++
-              "  laptop\n" ++
-              "  beer\n" ++
+              "  mug       (In the Bedroom)\n" ++
+              "  laptop    (In the Lounge)\n" ++
+              "  coffeepot (In the Kitchen)\n" ++
+              "  beer      (In the Kitchen)\n" ++
               "\n" ++
               "DIRECTIONS:\n" ++
               "  north\n" ++
@@ -380,11 +380,23 @@ helpMessage = "----- Haskell-P1 -----\n" ++
               "  in\n" ++
               "  out\n" ++
               "\n" ++
+              "TASKS:\n" ++
+              "  1) Turn on the lights\n" ++
+              "  2) Obtain your \"laptop\"\n" ++
+              "  3) Obtain your \"mug\"\n" ++
+              "  4) Go for a shower\n" ++
+              "  5) Obtain the \"coffeepot\"\n" ++
+              "  6) Pour the coffee from the \"coffeepot\" into the \"mug\"\n" ++
+              "  7) Drink the coffee\n" ++
+              "  8) Open the door in the Hall to the Street\n" ++
+              "  9) Exit to the Street and go to your lectures!\n" ++
+              "  OPTIONAL) Drink the beer... are you sure that's a good idea before lectures?\n" ++
+              "\n" ++
               "GAME MAP:\n" ++
-              "  ----------\n" ++
-              "  | Street |\n" ++
-              "  ----------\n" ++
-              "      ^\n" ++
+              "  ----------                               ^\n" ++
+              "  | Street |                               |\n" ++
+              "  ----------                               |\n" ++
+              "      ^                                 (NORTH)\n" ++
               "      | (out)\n" ++
               "  ----------      -----------\n" ++
               "  |  Hall  | <--> | Kitchen |\n" ++
