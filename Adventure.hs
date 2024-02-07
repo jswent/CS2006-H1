@@ -52,12 +52,12 @@ process :: [String] -> State GameData ReturnValue
 process [cmd, argStr] = case actions cmd of
                           Just fn -> case arguments argStr of
                                       Just arg -> fn arg
-                                      Nothing -> return "I don't understand"
-                          Nothing -> return "I don't understand"
+                                      Nothing -> return "- I don't understand"
+                          Nothing -> return "- I don't understand"
 process [cmd] = case commands cmd of
                   Just fn -> fn
-                  Nothing -> return "I don't understand"
-process _ = return "I don't understand"
+                  Nothing -> return "- I don't understand"
+process _ = return "- I don't understand"
 
 {-- This is the game loop. --}
 repl :: StateT GameData (InputT IO) ()
