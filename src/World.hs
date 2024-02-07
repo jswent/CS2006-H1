@@ -13,8 +13,8 @@ import Control.Monad.State
 type Action = Argument -> State GameData ReturnValue
 
 {-- A required parameter for an Action. --}
-data Argument = ObjArg (WorldObject) 
-              | DirArg (Direction)
+data Argument = ObjArg WorldObject
+              | DirArg Direction
     deriving (Generic)
 
 {-- An alias for the message returned by actions, indicating success or failure. --}
@@ -112,7 +112,7 @@ data ObjectType = Mug | CoffeePot | Laptop | Beer
 
 
 instance Show WorldObject where
-    show obj = obj_longname obj
+    show = obj_longname
 
 
 mug, fullmug, coffeepot, laptop :: WorldObject
@@ -217,7 +217,7 @@ data Exit = Exit { exit_dir :: Direction,   -- The direction of the exit relativ
 {-- Functions inportant for the game logic. --}
 {-- Check if the player has won (i.e. if their current location is the "street", and they have their laptop with them) --}
 won :: GameData -> Bool
-won game_data = location_id game_data == Street && (laptop `elem` inventory game_data) && not (drunk game_data) && showered game_data == True
+won game_data = location_id game_data == Street && (laptop `elem` inventory game_data) && not (drunk game_data) && showered game_data
 
 {-- Sets the initial values for the game's state and returns a GameData object representation --}
 initState :: GameData
