@@ -50,7 +50,7 @@ data GameData = GameData { location_id :: RoomID,      -- Where player is
                            finished :: Bool,            -- Set to True at the end
                            light :: Bool,               -- Light is on
                            showered :: Bool,            -- Player has showered
-                           drunk :: Bool               -- Player is drunk             
+                           drunk :: Bool               -- Player is drunk
                          }
     deriving (Generic)
 
@@ -116,11 +116,11 @@ instance Show WorldObject where
 
 
 mug, fullmug, coffeepot, laptop :: WorldObject
-mug       = WorldObject Mug       "a coffee mug"      "A coffee mug"
-fullmug   = WorldObject Mug       "a full coffee mug" "A coffee mug containing freshly brewed coffee"
-coffeepot = WorldObject CoffeePot "a pot of coffee"   "A pot containing freshly brewed coffee"
-beer      = WorldObject Beer      "a bottle of beer"  "A bottle of ice cold beer"
-laptop    = WorldObject Laptop    "a laptop"          "A laptop used for studying"
+mug       = WorldObject Mug       "a coffee mug (\"mug\")"          "A coffee mug (\"mug\")"
+fullmug   = WorldObject Mug       "a full coffee mug (\"mug\")"     "A coffee mug containing freshly brewed coffee (\"mug\")"
+coffeepot = WorldObject CoffeePot "a pot of coffee (\"coffeepot\")" "A pot containing freshly brewed coffee (\"coffeepot\")"
+beer      = WorldObject Beer      "a bottle of beer (\"beer\")"     "A bottle of ice cold beer (\"beer\")"
+laptop    = WorldObject Laptop    "a laptop (\"laptop\")"           "A laptop used for studying (\"laptop\")"
 
 
 
@@ -152,13 +152,13 @@ bedroom, kitchen, lounge, hall, street, bathroom :: Room
 
 bedroom = Room Bedroom                                            -- RoomID
                 "You are in your bedroom. "                       -- Room description
-               [Exit North "To the north is a kitchen. " Kitchen, -- [Exit]
-                Exit West  "To the west is the lounge. " Lounge,
-                Exit East "To the east is the bathroom. " Bathroom]  
+               [Exit North "To the north is a kitchen. "   Kitchen, -- [Exit]
+                Exit West  "To the west is the lounge. "   Lounge,
+                Exit East  "To the east is the bathroom. " Bathroom]
                [mug]                                              -- [WorldObject]
 
 kitchen = Room Kitchen
-                "You are in the kitchen."
+                "You are in the kitchen. "
                [Exit South "To the south is your bedroom. " Bedroom,
                 Exit West "To the west is a hallway. " Hall]
                [coffeepot, beer]
@@ -166,7 +166,7 @@ kitchen = Room Kitchen
 
 {-- New data about the lounge for when we turn the light on is below this "lounge" constructor --}
 lounge = Room Lounge
-              "You are in the lounge. The light switch is off. "
+              "You are in the lounge. The light switch is off. (Use the \"press\" command to turn on the lights)"
               [Exit East "To the east is a bedroom. " Bedroom]
               [laptop]
 
@@ -174,7 +174,7 @@ bathroom = Room Bathroom
                 "You are in the Bathroom. You have not showered today"
                 [Exit West "To the west is your bedroom. " Bedroom]
                 []
-              
+
 litloungedesc = "You are in the lounge. The light switch is on"
 bathroomShoweredDesc = "You are in the bathroom. You have showered. "
 
@@ -197,11 +197,11 @@ street = Room Street
 
 
 {-- A list of all possible environments that the player could find themselves in --}
-gameworld = [(Bedroom, bedroom),
-             (Kitchen, kitchen),
-             (Hall,    hall),
-             (Street,  street),
-             (Lounge,  lounge),
+gameworld = [(Bedroom,  bedroom),
+             (Kitchen,  kitchen),
+             (Hall,     hall),
+             (Street,   street),
+             (Lounge,   lounge),
              (Bathroom, bathroom)]
 
 
