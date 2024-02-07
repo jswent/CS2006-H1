@@ -119,7 +119,7 @@ mug, fullmug, coffeepot, laptop :: WorldObject
 mug       = WorldObject Mug       "a coffee mug (\"mug\")"          "A coffee mug (\"mug\")"
 fullmug   = WorldObject Mug       "a full coffee mug (\"mug\")"     "A coffee mug containing freshly brewed coffee (\"mug\")"
 coffeepot = WorldObject CoffeePot "a pot of coffee (\"coffeepot\")" "A pot containing freshly brewed coffee (\"coffeepot\")"
-beer      = WorldObject Beer      "a bottle of beer (\"beer\")"                "A bottle of ice cold beer (\"beer\")"
+beer      = WorldObject Beer      "a bottle of beer (\"beer\")"     "A bottle of ice cold beer (\"beer\")"
 laptop    = WorldObject Laptop    "a laptop (\"laptop\")"           "A laptop used for studying (\"laptop\")"
 
 
