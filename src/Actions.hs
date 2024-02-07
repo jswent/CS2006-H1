@@ -269,15 +269,18 @@ pour = do
     done, also update the 'caffeinated' flag in the game state.
 
     Also, put the empty coffee mug back in the inventory!
+    This action also covers drinking a beer. What is drunk depends on what object is passed to the action
 --}
 drink :: Action
 drink (ObjArg object) = do
     state <- get
     if carrying mug state && (poured state) && object == mug then do
+        -- Player is drinking a coffee
         let newInventory = mug : filter (\obj -> obj_name obj /= Mug) (inventory state)
         put $ state { inventory = newInventory, caffeinated = True, poured = False, drunk = False }
         return "Coffee has been drunk and you are now caffeinated"
     else if carrying beer state && object == beer then do
+        -- Player is drinking
         let newInventory = filter(\obj -> obj_name obj /= Beer) (inventory state)
         put $ state {inventory = newInventory, drunk =  True}
         return "Beer has been drunk and you are now pissed. You must have a coffee again to sober up"
@@ -309,12 +312,18 @@ open = do
 press :: Command
 press = do
     state <- get
+    let newLounge = lounge {
+        room_desc = litloungedesc
+    }
     if (location_id state) == Lounge then do
         put $ state { light = True }
+        updateRoom Lounge newLounge
         return "Light is switched on."
     else
         return "To turn on the light you must be in the lounge."
 
+{-- Take a shower. This will allow players to go to their lectures and must be done to finish the game
+    To take a shower you must be in the bathroom --}
 shower :: Command
 shower = do
     state <- get
