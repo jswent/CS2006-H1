@@ -76,8 +76,7 @@ repl = do
                 Just cmd ->
                     if isSaveCommand cmd
                         then do
-                            --Save game
-                            -- write encoded JSON to file
+                            --Save game (write encoded JSON to file)
                             liftIO $ writeFile (getFilePath cmd) (byteStringToString (encode state))
                             --display message and go back to the start of the game loop
                             lift $ outputStrLn "Game saved successfully"
