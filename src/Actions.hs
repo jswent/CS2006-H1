@@ -26,7 +26,7 @@ commands "pour"      = Just pour
 commands "open"      = Just open
 commands "press"     = Just press
 commands "inventory" = Just inv
--- commands "help"      = Just help
+commands "help"      = Just help
 commands "quit"      = Just quit
 commands _           = Nothing
 
@@ -256,9 +256,9 @@ pour = do
     if carrying coffeepot state && carrying mug state && not (poured state) then do
         let newInventory = fullmug : filter (\obj -> obj_name obj /= Mug) (inventory state)
         put $ state { inventory = newInventory, poured = True }
-        return "Coffee mug is now full and ready to drink"
+        return "Coffee mug is now full and ready to drink (use the \"drink mug\" action)"
     else if carrying coffeepot state && carrying mug state then
-        return "Coffee mug is already full and ready to drink"
+        return "Coffee mug is already full and ready to drink (use the \"drink mug\" action)"
     else
         return "Cannot pour coffee until you have both the coffee pot and a mug in your inventory"
 
@@ -320,15 +320,15 @@ inv = do
           -- showInv xs = "You are carrying:\n" ++ foldr (\x acc -> obj_longname x ++ "\n" ++ acc) "" xs
 
 {-- Display a help message to the user, taking into account the current items they have and the tasks they need to complete --}
-help :: String -> IO ()
-help state = do
-    putStrLn helpMessage
-    return "-----\n"
+help :: Command
+help = do
+    state <- get
+    return helpMessage
 
-
+helpMessage :: ReturnValue
 helpMessage = "----- Haskell-P1 -----\n" ++
               "ACTIONS:\n" ++
-              "   go      [Direction]\n" ++
+              "  go      [Direction]\n" ++
               "  get     [Object]\n" ++
               "  put     [Object]\n" ++
               "  examine [Object]\n" ++

@@ -113,10 +113,10 @@ instance Show WorldObject where
 
 
 mug, fullmug, coffeepot, laptop :: WorldObject
-mug       = WorldObject Mug       "a coffee mug"      "A coffee mug"
-fullmug   = WorldObject Mug       "a full coffee mug" "A coffee mug containing freshly brewed coffee"
-coffeepot = WorldObject CoffeePot "a pot of coffee"   "A pot containing freshly brewed coffee"
-laptop    = WorldObject Laptop    "a laptop"          "A laptop used for studying"
+mug       = WorldObject Mug       "a coffee mug (\"mug\")"          "A coffee mug (\"mug\")"
+fullmug   = WorldObject Mug       "a full coffee mug (\"mug\")"     "A coffee mug containing freshly brewed coffee (\"mug\")"
+coffeepot = WorldObject CoffeePot "a pot of coffee (\"coffeepot\")" "A pot containing freshly brewed coffee (\"coffeepot\")"
+laptop    = WorldObject Laptop    "a laptop (\"laptop\")"           "A laptop used for studying (\"laptop\")"
 
 
 
@@ -161,7 +161,7 @@ kitchen = Room Kitchen
 
 {-- New data about the lounge for when we turn the light on is below this "lounge" constructor --}
 lounge = Room Lounge
-              "You are in the lounge. The light switch is off. "
+              "You are in the lounge. The light switch is off. (Use the \"press\" command to turn on the lights)"
               [Exit East "To the east is a bedroom. " Bedroom]
               [laptop]
               
