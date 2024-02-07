@@ -14,7 +14,6 @@ actions :: String -> Maybe Action
 actions "go"      = Just go
 actions "get"     = Just getAction
 actions "put"     = Just putAction
--- actions "drop"    = Just drop      <- (DO WE STILL NEED THIS?) (Dont think so - Rory)
 actions "examine" = Just examine
 actions "drink"   = Just drink
 actions _         = Nothing
@@ -28,6 +27,7 @@ commands "press"     = Just press
 commands "quit"      = Just quit
 commands "shower"    = Just shower
 commands "inventory" = Just inv
+commands "help"      = Just help
 commands _           = Nothing
 
 
@@ -87,7 +87,7 @@ move dir rm = fmap room . listToMaybe $ filter (\exit -> exit_dir exit == dir) (
 
 {-- Return True if the object appears in the room. --}
 objectHere :: WorldObject -> Room -> Bool
-objectHere user_object room = any (\obj -> (obj_name obj) == (obj_name user_object)) (objects room)
+objectHere user_object room = any (\obj -> obj_name obj == obj_name user_object) (objects room)
 
 
 {-- 
@@ -104,7 +104,7 @@ removeObject user_object room = room { objects = filter ((/= obj_name user_objec
 --}
 addObject :: WorldObject -> Room -> Room
 addObject new_object room | objectHere new_object room = room
-                          | otherwise                  = let new_objects = (objects room) ++ [new_object]
+                          | otherwise                  = let new_objects = objects room ++ [new_object]
                                                            in (room {objects = new_objects})
                                                            
 
@@ -191,8 +191,8 @@ go (DirArg direction) = do
     case newRoomMaybe of
         Just newRoom -> do
             modify (\s -> s { location_id = newRoom })
-            return "OK"
-        Nothing -> return "No room in that direction."
+            return "--- OK ---"
+        Nothing -> return "- No room in that direction."
 
 {-- 
     Remove an item from the current room, and put it in the player's inventory.
@@ -208,9 +208,9 @@ getAction (ObjArg user_object) = do
         let newRoom = removeObject user_object currentRoom
         addInv user_object                     -- Directly use addInv
         updateRoom (location_id state) newRoom  -- Directly use updateRoom
-        return "Item picked up successfully"
+        return "--- Item picked up successfully ---"
     else
-        return "Item not in room"
+        return "- Item not in room"
 
 {-- 
     Remove an item from the player's inventory, and put it in the current room.
@@ -225,9 +225,9 @@ putAction (ObjArg user_object) = do
         let newRoom = addObject user_object currentRoom
         updateRoom (location_id state) newRoom  -- Directly use updateRoom
         removeInv user_object                   -- Directly use removeInv
-        return "Item put down successfully"
+        return "--- Item put down successfully ---"
     else
-        return "Item not in inventory"
+        return "- Item not in inventory"
 
 {-- 
     Don't update the state, just return a message giving the full description
@@ -244,7 +244,7 @@ examine (ObjArg user_object) = do
                      else findObj (obj_name user_object) (inventory state)
         in return $ obj_longname object ++ ": " ++ obj_desc object
     else
-        return "The object is neither in the room nor in your inventory."
+        return "- The object is neither in the room nor in your inventory."
 
 {-- 
     Pour the coffee. Obviously, this should only work if the player is carrying
@@ -257,11 +257,11 @@ pour = do
     if carrying coffeepot state && carrying mug state && not (poured state) then do
         let newInventory = fullmug : filter (\obj -> obj_name obj /= Mug) (inventory state)
         put $ state { inventory = newInventory, poured = True }
-        return "Coffee mug is now full and ready to drink"
+        return "--- Coffee mug is now full and ready to drink ---"
     else if carrying coffeepot state && carrying mug state then
-        return "Coffee mug is already full and ready to drink"
+        return "- Coffee mug is already full and ready to drink"
     else
-        return "Cannot pour coffee until you have both the coffee pot and a mug in your inventory"
+        return "- Cannot pour coffee until you have both the coffee pot and a mug in your inventory"
 
 {-- 
     Drink the coffee. This should only work if the player has a full coffee 
@@ -269,20 +269,23 @@ pour = do
     done, also update the 'caffeinated' flag in the game state.
 
     Also, put the empty coffee mug back in the inventory!
+    This action also covers drinking a beer. What is drunk depends on what object is passed to the action
 --}
 drink :: Action
 drink (ObjArg object) = do
     state <- get
-    if carrying mug state && (poured state) && object == mug then do
+    if carrying mug state && poured state && object == mug then do
+        -- Player is drinking a coffee
         let newInventory = mug : filter (\obj -> obj_name obj /= Mug) (inventory state)
         put $ state { inventory = newInventory, caffeinated = True, poured = False, drunk = False }
-        return "Coffee has been drunk and you are now caffeinated"
+        return "--- Coffee has been drunk and you are now caffeinated ---"
     else if carrying beer state && object == beer then do
+        -- Player is drinking
         let newInventory = filter(\obj -> obj_name obj /= Beer) (inventory state)
         put $ state {inventory = newInventory, drunk =  True}
-        return "Beer has been drunk and you are now pissed. You must have a coffee again to sober up"
+        return "--- Beer has been drunk and you are now intoxicated. You must have a coffee again to sober up ---"
     else
-        return "To drink you must have a full mug of coffee or a beer in your inventory"
+        return "- To drink you must have a full mug of coffee or a beer in your inventory"
 
 {-- 
     Open the door. Only allowed if the player has had coffee! 
@@ -295,12 +298,12 @@ drink (ObjArg object) = do
 open :: Command
 open = do
     state <- get
-    if caffeinated state && (location_id state) == Hall then do
+    if caffeinated state && location_id state == Hall then do
         let newHall = hall { room_desc = openedhall, exits = openedexits }
         updateRoom Hall newHall
-        return "Door has been opened to the street!"
+        return "--- Door has been opened to the street! ---"
     else
-        return "You are too sleepy. To open the door you must have drunk a mug of coffee."
+        return "- You are too sleepy. To open the door you must have drunk a mug of coffee."
 
 {--
     Press the light switch. Only allowed when player is in the lounge.
@@ -309,42 +312,115 @@ open = do
 press :: Command
 press = do
     state <- get
-    if (location_id state) == Lounge then do
+    let newLounge = lounge {
+        room_desc = litloungedesc
+    }
+    if location_id state == Lounge then do
         put $ state { light = True }
-        return "Light is switched on."
+        updateRoom Lounge newLounge
+        return "--- Light is switched on. ---"
     else
-        return "To turn on the light you must be in the lounge."
+        return "- To turn on the light you must be in the lounge."
 
+{-- Take a shower. This will allow players to go to their lectures and must be done to finish the game
+    To take a shower you must be in the bathroom --}
 shower :: Command
 shower = do
     state <- get
     let newBathroom = bathroom {
             room_desc = bathroomShoweredDesc
     }
-    if (location_id state) == Bathroom && not (showered state) then do
+    if location_id state == Bathroom && not (showered state) then do
         put $ state { showered = True }
         updateRoom Bathroom newBathroom
-        return "You took a shower"
-    else if (location_id state) == Bathroom && (showered state) then do
-        return "You have already showered this morning"
-    else return "To take a shower you must be in your bathroom"
-        
+        return "--- You took a shower ---"
+    else if location_id state == Bathroom && showered state then do
+        return "- You have already showered this morning"
+    else return "- To take a shower you must be in your bathroom"
+
 
 {-- Don't update the game state, just list what the player is carrying. --}
 inv :: Command
 inv = do
     state <- get
     return $ showInv (inventory state)
-    where showInv [] = "You aren't carrying anything"
-          showInv xs = "You are carrying:\n" ++ intercalate "\n" (map obj_longname xs) -- more idiomatic
+    where showInv [] = "- You aren't carrying anything"
+          showInv xs = "--- You are carrying:\n" ++ intercalate "\n" (map obj_longname xs) -- more idiomatic
           {-- This is the only way I could figure out how to use foldr without printing an additional newline, pretty ugly. --}
           -- showInv xs = "You are carrying:\n" ++ foldr appendItem "" xs
-          -- appendItem item acc 
+          -- appendItem item acc
           --   | null acc  = obj_longname item
           --   | otherwise = obj_longname item ++ "\n" ++ acc
+
+{-- Display a help message to the user, taking into account the current items they have and the tasks they need to complete --}
+help :: Command
+help = do
+    state <- get
+    return helpMessage
+
+helpMessage :: ReturnValue
+helpMessage = "\n----- Haskell-P1 -----\n" ++
+              "ACTIONS:\n" ++
+              "  go      [Direction] (Move in the specified direction, if applicable)\n" ++
+              "  get     [Object]    (Pick up an object)\n" ++
+              "  put     [Object]    (Put down an object)\n" ++
+              "  examine [Object]    (Examine an object)\n" ++
+              "  drink   [Object]    (Consume a drinkable object)\n" ++
+              "\n" ++
+              "COMMANDS:\n" ++
+              "  pour      (Pour coffee from the \"coffeepot\" into the \"mug\")\n" ++
+              "  open      (Open the door in the Hall leading to the Street)\n" ++
+              "  press     (Press the light switch in the Lounge to turn on the lights)\n" ++
+              "  inventory (Get a list of all objects in your inventory))\n" ++
+              "  help      (Print this message)\n" ++
+              "  quit      (Exit the game)\n" ++
+              "\n" ++
+              "OBJECTS:\n" ++
+              "  mug       (In the Bedroom)\n" ++
+              "  laptop    (In the Lounge)\n" ++
+              "  coffeepot (In the Kitchen)\n" ++
+              "  beer      (In the Kitchen)\n" ++
+              "\n" ++
+              "DIRECTIONS:\n" ++
+              "  north\n" ++
+              "  east\n" ++
+              "  south\n" ++
+              "  west\n" ++
+              "  in\n" ++
+              "  out\n" ++
+              "\n" ++
+              "TASKS:\n" ++
+              "  1) Turn on the lights\n" ++
+              "  2) Obtain your \"laptop\"\n" ++
+              "  3) Obtain your \"mug\"\n" ++
+              "  4) Go for a shower\n" ++
+              "  5) Obtain the \"coffeepot\"\n" ++
+              "  6) Pour the coffee from the \"coffeepot\" into the \"mug\"\n" ++
+              "  7) Drink the coffee\n" ++
+              "  8) Open the door in the Hall to the Street\n" ++
+              "  9) Exit to the Street and go to your lectures!\n" ++
+              "  OPTIONAL) Drink the beer... are you sure that's a good idea before lectures?\n" ++
+              "\n" ++
+              "GAME MAP:\n" ++
+              "  ----------                               ^\n" ++
+              "  | Street |                               |\n" ++
+              "  ----------                               |\n" ++
+              "      ^                                 (NORTH)\n" ++
+              "      | (out)\n" ++
+              "  ----------      -----------\n" ++
+              "  |  Hall  | <--> | Kitchen |\n" ++
+              "  ----------      -----------\n" ++
+              "                       ^\n" ++
+              "                       |\n" ++
+              "  ----------      -----------      ------------\n" ++
+              "  | Lounge | <--> | Bedroom | <--> | Bathroom |\n" ++
+              "  ----------      -----------      ------------\n" ++
+              "                     START\n\n" ++
+              "----------------------\n"
+
 
 {-- End the game loop and display a message to the player. --}
 quit :: Command
 quit = do
     modify (\s -> s { finished = True })
-    return "Bye bye"
+    return "--- Bye bye ---"

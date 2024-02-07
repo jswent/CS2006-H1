@@ -5,7 +5,6 @@ import Actions
 
 import Parsing
 
--- import Control.Applicative
 import Control.Monad
 import Control.Monad.State
 import System.IO
@@ -55,12 +54,12 @@ process :: [String] -> State GameData ReturnValue
 process [cmd, argStr] = case actions cmd of
                           Just fn -> case arguments argStr of
                                       Just arg -> fn arg
-                                      Nothing -> return "I don't understand"
-                          Nothing -> return "I don't understand"
+                                      Nothing -> return "- I don't understand"
+                          Nothing -> return "- I don't understand"
 process [cmd] = case commands cmd of
                   Just fn -> fn
-                  Nothing -> return "I don't understand"
-process _ = return "I don't understand"
+                  Nothing -> return "- I don't understand"
+process _ = return "- I don't understand"
 
 commandParser :: Parser (State GameData ReturnValue)
 commandParser = do
@@ -90,21 +89,27 @@ repl = do
     if finished state
         then return ()
         else do
+            --Prompt user for an input
             lift $ outputStrLn ""
             lift $ outputStrLn $ show state ++ "\n"
-            lift $ outputStr "What now? "
+            lift $ outputStr "> What now? "
             mcmd <- lift $ getInputLine ""
             case mcmd of
                 Nothing -> return ()  -- Handle end-of-input (e.g., EOF/Ctrl-D)
                 Just cmd ->
                     if isSaveCommand cmd
                         then do
+                            --Save game
+                            -- write encoded JSON to file
                             liftIO $ writeFile (getFilePath cmd) (byteStringToString (encode state))
+                            --display message and go back to the start of the game loop
                             lift $ outputStrLn "Game saved successfully"
                             repl
                         else if isLoadCommand cmd
+                            --Load game
                             then do
                                 newState <- lift $ handleLoad cmd
+                                --display message and go back to the start of the game loop
                                 lift $ outputStrLn "Game Loaded successfully"
                                 put newState
                                 repl
@@ -121,7 +126,7 @@ main :: IO ()
 main = runInputT defaultSettings $ evalStateT repl initState
 
 
-{-- INSERT HIGHLY INFORMATIVE COMMENT HERE --}
+{-- This function will read in the json data from the specified file to the game state --}
 handleLoad :: String -> InputT IO GameData
 handleLoad str =
   do
@@ -137,7 +142,7 @@ handleLoad str =
     return newState
 
 
-{-- INSERT HIGHLY INFORMATIVE COMMENT HERE --}
+{-- This functions takes a input save/load command, and drops the save/load section to return the filepath --}
 getFilePath :: String -> String
 getFilePath xs
   | length xs > 5 = drop 5 xs
