@@ -3,6 +3,9 @@ module Main where
 import World
 import Actions
 
+import Parsing
+
+-- import Control.Applicative
 import Control.Monad
 import Control.Monad.State
 import System.IO
@@ -59,8 +62,59 @@ process [cmd] = case commands cmd of
                   Nothing -> return "I don't understand"
 process _ = return "I don't understand"
 
+commandParser :: Parser (State GameData ReturnValue)
+commandParser = do
+    cmd <- many letter  -- Parses the command/action identifier as letters
+    space               -- Optional space
+    rest <- many item   -- Parses the rest of the input (potentially an argument)
+    let maybeArg = if null rest then Nothing else Just rest
+    return $ case maybeArg of
+        Just arg -> case actions cmd of
+                      Just action -> case arguments arg of
+                          Just argument -> action argument
+                          Nothing -> return "I don't understand"
+                      Nothing -> return "I don't understand"
+        Nothing -> case commands cmd of
+                      Just command -> command
+                      Nothing -> return "I don't understand"
+
+processParser :: [(State GameData ReturnValue, String)] -> State GameData ReturnValue
+processParser parsed = case parsed of
+    [(action, "")] -> action  -- Parsing successful and input fully consumed
+    _ -> return "I don't understand"  -- Parsing failed or input not fully consumed
+
 {-- This is the game loop. --}
 repl :: StateT GameData (InputT IO) ()
+-- repl = do
+--     state <- get
+--     if finished state
+--         then return ()
+--         else do
+--             lift $ outputStrLn ""
+--             lift $ outputStrLn $ show state ++ "\n"
+--             lift $ outputStr "What now? "
+--             mcmd <- lift $ getInputLine ""
+--             case mcmd of
+--                 Nothing -> return ()  -- Handle end-of-input (e.g., EOF/Ctrl-D)
+--                 Just cmd
+--                     | isSaveCommand cmd -> do
+--                         liftIO $ writeFile (getFilePath cmd) (byteStringToString (encode state))
+--                         lift $ outputStrLn "Game saved successfully"
+--                         repl
+--                     | isLoadCommand cmd -> do
+--                         newState <- lift $ handleLoad cmd
+--                         lift $ outputStrLn "Game Loaded successfully"
+--                         put newState
+--                         repl
+--                     | otherwise -> case parse commandParser cmd of
+--                         [(result, "")] -> do  -- Ensure entire input is consumed
+--                             newState <- gets (execState result)
+--                             put newState
+--                             lift $ outputStrLn "Action completed."
+--                             unless (finished newState) repl
+--                         _ -> do
+--                             lift $ outputStrLn "I don't understand"
+--                             repl
 repl = do
     state <- get
     if finished state
@@ -85,7 +139,8 @@ repl = do
                                 put newState
                                 repl
                             else do
-                                let (msg, newState) = runState (process (words cmd)) state
+                                let parsed = parse commandParser cmd
+                                let (msg, newState) = runState (processParser parsed) state
                                 lift $ outputStrLn msg
                                 if won newState
                                     then lift $ outputStrLn winmessage
