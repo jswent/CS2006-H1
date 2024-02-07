@@ -48,13 +48,16 @@ data GameData = GameData { location_id :: RoomID,      -- Where player is
                            poured :: Bool,             -- Coffee is poured
                            caffeinated :: Bool,        -- Coffee is drunk
                            finished :: Bool,            -- Set to True at the end
-                           light :: Bool               -- Light is on
+                           light :: Bool,               -- Light is on
+                           showered :: Bool,            -- Player has showered
+                           drunk :: Bool               -- Player is drunk
                          }
     deriving (Generic)
 
 
 instance Show GameData where
     show game_data
+      | location_id game_data == Street && drunk game_data = "You are drunk, Drink another coffee to sober up"
       | light game_data = show (getRoomData game_data)
       | otherwise       = "The light is off so you cannot see any exits or objects.\n" ++ room_desc (getRoomData game_data)
 
@@ -104,7 +107,7 @@ data WorldObject = WorldObject { obj_name :: ObjectType,  -- The short name of t
     deriving (Eq, Generic)
 
 
-data ObjectType = Mug | CoffeePot | Laptop
+data ObjectType = Mug | CoffeePot | Laptop | Beer
     deriving (Eq, Generic)
 
 
@@ -116,6 +119,7 @@ mug, fullmug, coffeepot, laptop :: WorldObject
 mug       = WorldObject Mug       "a coffee mug (\"mug\")"          "A coffee mug (\"mug\")"
 fullmug   = WorldObject Mug       "a full coffee mug (\"mug\")"     "A coffee mug containing freshly brewed coffee (\"mug\")"
 coffeepot = WorldObject CoffeePot "a pot of coffee (\"coffeepot\")" "A pot containing freshly brewed coffee (\"coffeepot\")"
+beer      = WorldObject Beer      "a bottle of beer"  "A bottle of ice cold beer (\"beer\")"
 laptop    = WorldObject Laptop    "a laptop (\"laptop\")"           "A laptop used for studying (\"laptop\")"
 
 
@@ -128,7 +132,7 @@ data Room = Room {  room_name :: RoomID,        -- The name of the room
                     objects :: [WorldObject] }  -- The objects contained within the current room
     deriving (Eq, Generic)
 
-data RoomID = Bedroom | Kitchen | Hall | Street | Lounge
+data RoomID = Bedroom | Kitchen | Hall | Street | Lounge | Bathroom
     deriving (Eq, Generic, Show, Read)
 
 
@@ -144,19 +148,20 @@ instance Show Room where
            
            
 {-- Room Constructors --}
-bedroom, kitchen, lounge, hall, street :: Room
+bedroom, kitchen, lounge, hall, street, bathroom :: Room
 
 bedroom = Room Bedroom                                            -- RoomID
                 "You are in your bedroom. "                       -- Room description
-               [Exit North "To the north is a kitchen. " Kitchen, -- [Exit]
-                Exit West  "To the west is the lounge. " Lounge]  
+               [Exit North "To the north is a kitchen. "   Kitchen, -- [Exit]
+                Exit West  "To the west is the lounge. "   Lounge,
+                Exit East  "To the east is the bathroom. " Bathroom]
                [mug]                                              -- [WorldObject]
 
 kitchen = Room Kitchen
                 "You are in the kitchen."
                [Exit South "To the south is your bedroom. " Bedroom,
                 Exit West "To the west is a hallway. " Hall]
-               [coffeepot]
+               [coffeepot, beer]
 
 
 {-- New data about the lounge for when we turn the light on is below this "lounge" constructor --}
@@ -164,8 +169,14 @@ lounge = Room Lounge
               "You are in the lounge. The light switch is off. (Use the \"press\" command to turn on the lights)"
               [Exit East "To the east is a bedroom. " Bedroom]
               [laptop]
-              
+
+bathroom = Room Bathroom
+                "You are in the Bathroom. You have not showered today"
+                [Exit West "To the west is your bedroom. " Bedroom]
+                []
+
 litloungedesc = "You are in the lounge. The light switch is on"
+bathroomShoweredDesc = "You are in the bathroom. You have showered. "
 
 
 {-- New data about the hall for when we open the door is below this "hall" constructor --}
@@ -180,17 +191,18 @@ openedexits = [Exit East "To the east is a kitchen. " Kitchen,
 
 
 street = Room Street
-              "You have made it out of the house. To finish the game you must bring your laptop to the lecture."
+              "You have made it out of the house. To finish the game you must bring your laptop to the lecture and take a shower."
               [Exit In "You can go back inside if you like. " Hall]
               []
 
 
 {-- A list of all possible environments that the player could find themselves in --}
-gameworld = [(Bedroom, bedroom),
-             (Kitchen, kitchen),
-             (Hall,    hall),
-             (Street,  street),
-             (Lounge,  lounge)]
+gameworld = [(Bedroom,  bedroom),
+             (Kitchen,  kitchen),
+             (Hall,     hall),
+             (Street,   street),
+             (Lounge,   lounge),
+             (Bathroom, bathroom)]
 
 
 {-- Exit --}
@@ -205,11 +217,11 @@ data Exit = Exit { exit_dir :: Direction,   -- The direction of the exit relativ
 {-- Functions inportant for the game logic. --}
 {-- Check if the player has won (i.e. if their current location is the "street", and they have their laptop with them) --}
 won :: GameData -> Bool
-won game_data = location_id game_data == Street && (laptop `elem` inventory game_data)
+won game_data = location_id game_data == Street && (laptop `elem` inventory game_data) && not (drunk game_data) && showered game_data == True
 
 {-- Sets the initial values for the game's state and returns a GameData object representation --}
 initState :: GameData
-initState = GameData Bedroom gameworld [] False False False False
+initState = GameData Bedroom gameworld [] False False False False False False
 
 {- Return the room the player is currently in -}
 getRoomData :: GameData -> Room

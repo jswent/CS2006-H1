@@ -27,7 +27,7 @@ isSaveCommand input = case input of
 {-- Checks if an input begins with the word "load". --}
 isLoadCommand :: String -> Bool
 isLoadCommand input = case input of
-    'l':'o':'a':'d':' ':_ -> True
+    'l':'o':'a':'d':_ -> True
     _ -> False
 
 

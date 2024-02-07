@@ -15,8 +15,6 @@ runWorldTest = mapM_ (\(name, prop) -> do
     putStrLn ("Running " ++ name)
     quickCheck prop) properties
 
--- TODO: These tests will have to be refactored for implementing State
-
 -- Define arbitrary GameData
 instance Arbitrary GameData where
     arbitrary = do
@@ -27,7 +25,9 @@ instance Arbitrary GameData where
         caffeinated <- arbitrary
         finished <- arbitrary
         light <- arbitrary
-        return $ GameData location world items poured caffeinated finished light
+        showered <- arbitrary
+        drunk <- arbitrary
+        return $ GameData location world items poured caffeinated finished light showered drunk
 
 instance Arbitrary ObjectType where
     arbitrary = elements [Mug, CoffeePot, Laptop]

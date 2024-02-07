@@ -14,7 +14,6 @@ actions :: String -> Maybe Action
 actions "go"      = Just go
 actions "get"     = Just getAction
 actions "put"     = Just putAction
--- actions "drop"    = Just drop      <- (DO WE STILL NEED THIS?)
 actions "examine" = Just examine
 actions "drink"   = Just drink
 actions _         = Nothing
@@ -25,9 +24,10 @@ commands :: String -> Maybe Command
 commands "pour"      = Just pour
 commands "open"      = Just open
 commands "press"     = Just press
+commands "quit"      = Just quit
+commands "shower"    = Just shower
 commands "inventory" = Just inv
 commands "help"      = Just help
-commands "quit"      = Just quit
 commands _           = Nothing
 
 
@@ -49,6 +49,7 @@ arguments "mug"       = Just (ObjArg mug)
 -- arguments "fullmug"   = Just (ObgArg fullmug)   <- (DO WE STILL NEED THIS?)
 arguments "coffeepot" = Just (ObjArg coffeepot)
 arguments "laptop"    = Just (ObjArg laptop)
+arguments "beer"      = Just (ObjArg beer)
 arguments _           = Nothing
 
 
@@ -256,9 +257,9 @@ pour = do
     if carrying coffeepot state && carrying mug state && not (poured state) then do
         let newInventory = fullmug : filter (\obj -> obj_name obj /= Mug) (inventory state)
         put $ state { inventory = newInventory, poured = True }
-        return "Coffee mug is now full and ready to drink (use the \"drink mug\" action)"
+        return "Coffee mug is now full and ready to drink"
     else if carrying coffeepot state && carrying mug state then
-        return "Coffee mug is already full and ready to drink (use the \"drink mug\" action)"
+        return "Coffee mug is already full and ready to drink"
     else
         return "Cannot pour coffee until you have both the coffee pot and a mug in your inventory"
 
@@ -272,12 +273,16 @@ pour = do
 drink :: Action
 drink (ObjArg object) = do
     state <- get
-    if carrying mug state && (poured state) then do
+    if carrying mug state && (poured state) && object == mug then do
         let newInventory = mug : filter (\obj -> obj_name obj /= Mug) (inventory state)
-        put $ state { inventory = newInventory, caffeinated = True, poured = False }
+        put $ state { inventory = newInventory, caffeinated = True, poured = False, drunk = False }
         return "Coffee has been drunk and you are now caffeinated"
+    else if carrying beer state && object == beer then do
+        let newInventory = filter(\obj -> obj_name obj /= Beer) (inventory state)
+        put $ state {inventory = newInventory, drunk =  True}
+        return "Beer has been drunk and you are now pissed. You must have a coffee again to sober up"
     else
-        return "To drink the coffee you must have a full mug of coffee in your inventory"
+        return "To drink you must have a full mug of coffee or a beer in your inventory"
 
 {-- 
     Open the door. Only allowed if the player has had coffee! 
@@ -310,14 +315,33 @@ press = do
     else
         return "To turn on the light you must be in the lounge."
 
+shower :: Command
+shower = do
+    state <- get
+    let newBathroom = bathroom {
+            room_desc = bathroomShoweredDesc
+    }
+    if (location_id state) == Bathroom && not (showered state) then do
+        put $ state { showered = True }
+        updateRoom Bathroom newBathroom
+        return "You took a shower"
+    else if (location_id state) == Bathroom && (showered state) then do
+        return "You have already showered this morning"
+    else return "To take a shower you must be in your bathroom"
+
+
 {-- Don't update the game state, just list what the player is carrying. --}
 inv :: Command
 inv = do
     state <- get
     return $ showInv (inventory state)
     where showInv [] = "You aren't carrying anything"
-          showInv xs = "You are carrying:\n" ++ intercalate "\n" (map obj_longname xs) -- more idiomatic, but let's use `foldr` as provided.
-          -- showInv xs = "You are carrying:\n" ++ foldr (\x acc -> obj_longname x ++ "\n" ++ acc) "" xs
+          showInv xs = "You are carrying:\n" ++ intercalate "\n" (map obj_longname xs) -- more idiomatic
+          {-- This is the only way I could figure out how to use foldr without printing an additional newline, pretty ugly. --}
+          -- showInv xs = "You are carrying:\n" ++ foldr appendItem "" xs
+          -- appendItem item acc
+          --   | null acc  = obj_longname item
+          --   | otherwise = obj_longname item ++ "\n" ++ acc
 
 {-- Display a help message to the user, taking into account the current items they have and the tasks they need to complete --}
 help :: Command
@@ -351,7 +375,7 @@ helpMessage = "----- Haskell-P1 -----\n" ++
               "  south\n" ++
               "  west\n" ++
               "  in\n" ++
-              "  out" 
+              "  out"
 
 
 {-- End the game loop and display a message to the player. --}
