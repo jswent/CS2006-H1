@@ -1,14 +1,446 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
 
+\documentclass[a4paper,]{article}
 
-\title{CS2006 Haskell P1 - Group Report}
+\usepackage{amsmath,amssymb}
+
+\usepackage{iftex}
+
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+
+\usepackage{lmodern}
+
+\ifPDFTeX\else
+  % xetex/luatex font selection
+  \setmainfont[]{Liberation Sans}
+\fi
+
+\usepackage{hyperref}
+
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+
+\makeatletter
+
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+
+\makeatother
+
+\usepackage{xcolor}
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+
+\makeatletter
+
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+
+\usepackage{graphicx}
+
+\usepackage[edges]{forest}
+
+\makeatletter
+
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\newlength{\cslhangindent}
+\setlength{\cslhangindent}{1.5em}
+\newlength{\csllabelwidth}
+\setlength{\csllabelwidth}{3em}
+\newlength{\cslentryspacingunit} % times entry-spacing
+\setlength{\cslentryspacingunit}{\parskip}
+\newenvironment{CSLReferences}[2] % #1 hanging-ident, #2 entry spacing
+ {% don't indent paragraphs
+  \setlength{\parindent}{0pt}
+  % turn on hanging indent if param 1 is 1
+  \ifodd #1
+  \let\oldpar\par
+  \def\par{\hangindent=\cslhangindent\oldpar}
+  \fi
+  % set entry spacing
+  \setlength{\parskip}{#2\cslentryspacingunit}
+ }%
+ {}
+
+\usepackage{geometry}
+\geometry{
+    top=1in,
+}
+ 
+\usepackage{calc}
+\newcommand{\CSLBlock}[1]{#1\hfill\break}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{#1}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{#1}\break}
+\newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
+
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+
+\urlstyle{same}
+\hypersetup{
+  pdftitle={CS2006 Haskell 1 Group Report},
+  pdfauthor={210013988, 220019716, 220018336},
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{CS2006 Haskell 1 Group Report}
+
+\usepackage{etoolbox}
+
+\makeatletter
+\providecommand{\subtitle}[1]{% add subtitle to \maketitle
+  \apptocmd{\@title}{\par {\large #1 \par}}{}{}
+}
+
+\makeatother
+
+\subtitle{Tutor: Edwin Brady}
+\author{210013988, 220019716, 220018336}
+\date{05-02-2024}
 
 \begin{document}
-
 \maketitle
 
-Hello this is the report.
+\hypertarget{overview}{%
+\subsection{Overview}\label{overview}}
+
+The aim of this practical was to create a game for the command-line based on the requirements set out by the practical specification~\cite{practical-specification}, which are listed below (some are listed exactly as written in the specification, others are paraphrased for brevity).
+
+\subsubsection{Basic Requirements}
+\begin{itemize}
+\tightlist
+\item
+  Introduce custom data types to replace \textit{String}. (Completed)
+\item
+  Implement movement. (Completed)
+\item
+  Implement "get" and "drop" commands. (Completed)
+\item 
+  Implement specific commands for pouring and drinking coffee, and opening the door. (Completed)
+\item 
+  Implement commands to help the user, to allow them to examine objects and list their inventory. (Completed)
+\end{itemize}
+
+\subsubsection{"Easy" Requirements}
+\begin{itemize}
+\tightlist
+\item
+  Add new rooms and objects. (Completed)
+\item
+  Introduce new puzzles. (Completed)
+\item
+  Set up a \textit{cabal} file to describe how to build the program. (Completed)
+\end{itemize}
+
+\subsubsection{"Medium" Requirements}
+\begin{itemize}
+\tightlist
+\item
+  Refactor to include higher order functions. (Completed)
+\item
+  Use \textit{QuickCheck} to write property based tests for your functions. (Completed)
+\end{itemize}
+
+\subsubsection{"Hard" Requirements}
+\begin{itemize}
+\tightlist
+\item Use \textit{Parsing.hs} as opposed to the \textit{words} command for parsing user input. (Completed)
+\item
+  Extend the parser to understand longer phrases. (NOT Completed)
+\item
+  Implement save and load functionality. (Completed)
+\item
+  Use the \textit{Haskeline} library for reading user input. (Completed)
+\end{itemize}
+
+\subsubsection{"Very Hard" Requirements}
+\begin{itemize}
+\tightlist
+\item
+  Use the \textit{State} type to represent game state. (Completed)
+\end{itemize}
+
+\newpage
+
+\hypertarget{design}{%
+\subsection{Design}\label{design}}
+
+This program is split into three sections, the library (consisting of \textit{Actions.hs} and \textit{World.hs}), the executable (\textit{Adventure.hs}), and the test suite. 
+
+The code for the library is contained within the \verb|src| directory, the test suite is within the \verb|test| directory, and the files related to the executable are stored in the \verb|app| directory.
+These sections are all contained within a parent \verb|Code| directory.
+
+The \textit{World.hs} file is where all of the types and data structures necessary for the game are defined. This includes the \verb|WorldObject|, \verb|Room|, \verb|Exit|, \verb|Direction|, \verb|Argument| and \verb|GameData| types, and the \verb|Action|, \verb|Command| and \verb|ReturnValue| type aliases.
+\verb|WorldObject| is a record type that describes the properties of the objects that can be found in the game world, and is a modified version of the original \verb|Object| type (the name change was necessary due to a constructor name conflict).
+The \verb|Action| type takes an \verb|Argument| (which is either the \verb|Direction| or \verb|WorldObject| that is required for the action to be completed) and the game state.
+
+We considered defining \verb|Action| as an algebraic data type that would consist of both the name of an \verb|Action|, and an associated \verb|Direction| or \verb|WorldObject| afterwards.
+This approach would allow us to pattern match in the functions themselves and would ensure that the argument was of the correct type.
+The big issue with this approach, however, is that we still need to convert the user's input from a \textit{String} to an instance of this type (as well as performing input validation also).
+This would effectively create a massive amount of duplicate code and overly complicate our design.
+Instead, the \verb|Argument| type was defined as a compromise.
+We still take the user's \textit{String} and match it to find the associated function as before; however, we will now check their argument separately and use the \verb|Maybe| Monad in order to handle any errors.
+This guarantees that any value stored in an instance of the \verb|Argument| type is valid instance of that type (as it must match to a predefined \verb|WorldObject| or \verb|Direction|), but also allows us to pattern match in the \verb|Action| functions themselves to ensure that the \verb|Argument| instance contains a value of the correct type (as \verb|WorldObject|s are wrapped with the \textit{ObjArg} constructor and \verb|Direction|s are wrapped with the \textit{DirArg} constructor).
+
+The \textit{Adventure.hs} file is where the code for the game loop is located. The "main" function is the entry point for the program and makes a single call to "repl", which will recursively call itself and make calls to "process" to interpret the user's input until the player reaches the \textit{Street}, has their \textit{laptop} with them, and has drank their coffee, at which point they have ``won'' and the game is exited.
+
+The \textit{Actions.hs} file is where all of the critical functions that modify game state exist. All \textit{Command}s and \textit{Action}s are defined here.
+Saving and loading was not considered to be a \verb|Command| as the way that this was parsed was slightly different to the other commands.
+Also, since this was dealing with \verb|IO| it would mean that the \textit{commands} function to return the appropriate command based on the user's input would have to support \verb|IO| also, which would clutter the code due to being completely unnecessary for all other aspects of the program.
+
+While the player can drink the \textit{beer} as opposed to the coffee, it should be noted that as long as the \textit{coffeepot} and \textit{mug} are in the player's inventory they will be able to fill the mug again to drink the coffee and undo the effects of the \textit{beer}.
 
 
+The player starts in the ``bedroom'' and must complete the following tasks in approximately this order:
+\begin{enumerate}
+    \item The player must navigate to the ``lounge'' with the ``go west'' action in order to turn on the lights with the "press" command.
+    \item The player must pick up their laptop from the ``lounge'' with the ``get laptop'' action.
+    \item The player must navigate back to the ``bedroom'' with the ``go east'' action.
+    \item The player must pick up their mug with the ``get mug'' action while in the ``bedroom'', and then navigate to the ``bathroom'' with the ``go east'' action.
+    \item The player must take a shower with the ``shower'' command and then navigate to the ``kitchen'' via the ``bedroom'' with the ``go west'' action followed by the ``go north'' action.
+    \item The player must pick up the pot of coffee with the ``get coffeepot'' action, pour the coffee with the ``pour'' command, and drink the coffee with the ``drink mug'' action.
+    \item The player must navigate to the hall with the ``go west'' action and, assuming they have already consumed the coffee and have their ``laptop'' with them, open their door with the ``open'' command and exit the house with the ``go out'' action.
+    \item The player is now in the ``street'' and has won the game!
+\end{enumerate}
 
+\newpage
+
+\hypertarget{provenance}{%
+\subsection{Provenance}\label{provenance}}
+
+\subsubsection{Libraries Used}\label{libraries}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2361}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2917}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2222}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2361}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Library
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Purpose
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Author
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Hackage Link
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Haskeline & Provides greater control over user interface. Satisfies requirement. & Judash Jacobson & \href{https://hackage.haskell.org/package/haskeline}{Link to Package}  \\
+Aeson & Used for parsing objects to and from JSON for save and load requirement. & Bryan O'Sullivan & \href{https://hackage.haskell.org/package/aeson}{Link to Package} \\
+QuickCheck & Property-based testing framework for Haskell. Satisfies requirement. & Koen Claessen & \href{https://hackage.haskell.org/package/QuickCheck}{Link to Package} \\
+MTL & Monad classes and transformers, used for State implementation. & Andy Gill & \href{https://hackage.haskell.org/package/mtl}{Link to Package}
+\end{longtable}
+
+\subsubsection{Files}
+
+\begin{tabular}{@{}l@{\hspace{20pt}}p{0.6\textwidth}}
+README.md & Created by us \\
+cabal.project.local & Created by us \\
+defaultfile.json & Created by us \\
+haskell-p1.cabal & Created by us \\
+\texttt{app/} \\
+\quad Adventure.hs & Adapted from provided Code \\
+\quad Parsing.hs & Unmodified from provided Code \\
+\texttt{src/} \\
+\quad Actions.hs & Adapted from provided Code \\
+\quad World.hs & Adapted from provided Code \\
+\texttt{test/} \\
+\quad ActionsTest.hs & Created by us \\
+\quad Test.hs & Created by us \\
+\quad WorldTest.hs & Created by us \\
+\end{tabular}
+
+
+\newpage
+
+\hypertarget{testing}{%
+\subsection{Testing}\label{testing}}
+
+To test the program we used \textit{QuickCheck} and also performed manual runs of the program to test for any bugs and gauge the ease of use of our implementation.
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2917}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2361}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2222}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2361}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+What is being tested
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Pre-conditions
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Expected Outcome
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Actual Outcome
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\textit{actions} function with known inputs & Known \verb|Action| strings provided & Function returns \textit{Just value} for action & As Expected \\
+\textit{actions} function with unknown inputs & Arbitrary strings not in known actions & Function returns Nothing & As Expected \\
+\textit{commands} function with known inputs & Known \verb|Command| strings provided & Function returns \textit{Just value} for command & As Expected \\
+\textit{commands} function with unknown inputs & Arbitrary strings not in known commands & Function returns \textit{Nothing} & As Expected \\
+\textit{arguments} function with known inputs & Known \verb|Argument| strings provided & Function returns \textit{Just value} for argument & As Expected \\
+\textit{arguments} function with unknown inputs & Arbitrary strings not in known arguments & Function returns \textit{Nothing} & As Expected \\
+\textit{move} function with invalid direction & Arbitrary \verb|Room| and invalid direction & Function returns \textit{Nothing} & As Expected \\
+\textit{objectHere} function for present object & \verb|Room| and object that is in the \verb|Room| & Function returns \textit{True} & As Expected \\
+\textit{objectHere} function for absent object & \verb|Room| and object not in the \verb|Room| & Function returns \textit{False} & As Expected \\
+\textit{addObject} function & \verb|Room| and \verb|WorldObject| to add & Object is in the \verb|Room|'s object list after addition & As Expected \\
+\textit{removeObject} function & \verb|Room| and \verb|WorldObject| to remove & Object is not in the \verb|Room|'s object list after removal & As Expected \\
+\textit{won} function with player in \textit{Street} and has ``laptop'' & \verb|GameData| with player in \textit{Street} and has ``laptop'' & Function returns \textit{True} & As Expected \\
+\textit{won} function with player not in \textit{Street} & \verb|GameData| with player not in the \textit{Street} & Function returns \textit{False} & As Expected \\
+\end{longtable}
+
+\begin{figure}
+\hypertarget{fig:one}{%
+\centering
+\includegraphics{1.png}
+\caption{Example run (Part 1)}\label{fig:one}
+}
+\end{figure}
+
+\begin{figure}
+\hypertarget{fig:two}{%
+\centering
+\includegraphics{2.png}
+\caption{Example run (Part 2)}\label{fig:two}
+}
+\end{figure}
+
+\begin{figure}
+\hypertarget{fig:three}{%
+\centering
+\includegraphics{3.png}
+\caption{Example run (Part 3)}\label{fig:three}
+}
+\end{figure}
+
+\begin{figure}
+\hypertarget{fig:four}{%
+\centering
+\includegraphics{4.png}
+\caption{Example run (Part 4)}\label{fig:four}
+}
+\end{figure}
+
+\begin{figure}
+\hypertarget{fig:five}{%
+\centering
+\includegraphics{5.png}
+\caption{\textit{QuickCheck} Results}\label{fig:five}
+}
+\end{figure}
+
+\newpage
+
+\hypertarget{evaluation}{%
+\subsection{Evaluation}\label{evaluation}}
+
+Regardless of the number of requirements met, we do recognise that some areas of our submission could be improved.
+
+We did not manage to extend the parsing library, which we believe was the only requirement that we did not complete; however, we are very happy with the fact that we managed to meet all others.
+
+We also recognise that the user interface leaves a lot to be desired.
+The ``>'' character before the prompt to the user was supposed to highlight the line at which the user was entering text into the prompt, the ``---'' pattern before a message indicates success from the action and the ``-'' character indicates a failure, but with so much text on the screen and so much repeated information it can be hard for the player to keep track of their progress.
+
+There is some dissonance between the player's objectives and the things they need to type to achieve these objectives.
+While some instances of this are rather humorous (i.e. the \textit{pour} command pours the coffee from the coffeepot into the user's mug, but then the \textit{drink mug} command is needed in order for the user to consume the coffee within the mug), other cases can make the game confusing at times.
+For example, just before the end of the game the player is told that they can now ``go outside'', but the command the player must enter is ``go out''.
+This is a small issue, but could still be irritating for the player.
+When the player starts the game (in the ``bedroom'') the lights are off, meaning that they cannot see any objects or any exits to go through.
+The main problem here is that they have to know to go to the ``lounge'', know how to reach the ``lounge'' (to the east; either by chance or already knowing this beforehand), \textit{and} that the ``press'' command must be used in the ``lounge'' in order to turn on the lights.
+Since we were not able to extend the parsing library in time for the submission deadline, this means that commands and actions were limited to single-word names only.
+The ability to say ``turn on the lights'' or ``drink coffee'' would have been a game-changer, but instead the \textit{help} command was introduced at the end as a slapdash substitute to the advanced parsing.
+Despite being primitive in design, the \textit{help} command does improve the playability of the game, serving its purpose well and somewhat mitigating the other issues posed by the UI's syntactic limitations.
+
+There are a couple of instances of ``head'' and ``tail'', although these appear in circumstances where it has already been determined that the lists they will be operating on will not be empty, and will therefore not crash the program.
+We decided that, while perhaps bad practice, it was better for readability that ``head'' and ``tail'' were kept in.
+Given more time, we would seek to refactor these parts of the code to remove occurrences of these functions, but relative to the other tasks we had this was considered relatively low priority.
+
+We did our best to include higher-order functions, but while there are instances of \textit{map} and \textit{filter} scattered fairly frequently throughout the program, \textit{foldr} does not appear often.
+Many cases in which we considered using folds would have been at the cost of readability, and therefore we decided that it would best not to follow through with the refactors; however, we have still considered the medium requirement satisfied as there is some inclusion of these higher-order functions, as requested.
+
+Notwithstanding the game's flaws, we are very happy overall with the outcome of the project and feel that this was a valuable learning experience, not just for improving our abilities with Haskell, but also for learning how to be effective contributors and communicators in our team.
+
+% \hypertarget{conclusion}{%
+% \subsection{Conclusion}\label{conclusion}}
+
+% This section should address:
+
+% \begin{itemize}
+% \tightlist
+% \item
+%   what you have achieved
+% \item
+%   what you found difficult
+% \item
+%   what you would have done if you had more time
+% \end{itemize}
+
+\hypertarget{refs}{}
+\begin{thebibliography}{99}
+    % [1] - Practical spec
+    \bibitem{practical-specification}
+        \textit{H1.html},
+        University of St Andrews School of Computer Science, 2024.
+
+        \url{https://studres.cs.st-andrews.ac.uk/CS2006/Coursework/H1/H1.html}
+
+    % [2] - 
+
+\end{thebibliography}
 
 \end{document}
