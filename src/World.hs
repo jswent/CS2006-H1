@@ -158,7 +158,7 @@ bedroom = Room Bedroom                                            -- RoomID
                [mug]                                              -- [WorldObject]
 
 kitchen = Room Kitchen
-                "You are in the kitchen."
+                "You are in the kitchen. "
                [Exit South "To the south is your bedroom. " Bedroom,
                 Exit West "To the west is a hallway. " Hall]
                [coffeepot, beer]

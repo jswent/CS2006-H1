@@ -375,7 +375,23 @@ helpMessage = "----- Haskell-P1 -----\n" ++
               "  south\n" ++
               "  west\n" ++
               "  in\n" ++
-              "  out"
+              "  out\n" ++
+              "\n" ++
+              "GAME MAP\n" ++
+              "  ----------\n" ++
+              "  | Street |\n" ++
+              "  ----------\n" ++
+              "      ^\n" ++
+              "      | (out)\n" ++
+              "  ----------      -----------\n" ++
+              "  |  Hall  | <--> | Kitchen |\n" ++
+              "  ----------      -----------\n" ++
+              "                       ^\n" ++
+              "                       |\n" ++
+              "  ----------      -----------      ------------\n" ++
+              "  | Lounge | <--> | Bedroom | <--> | Bathroom |\n" ++
+              "  ----------      -----------      ------------\n" ++
+              "----------------------\n"
 
 
 {-- End the game loop and display a message to the player. --}
