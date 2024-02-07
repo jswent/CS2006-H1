@@ -13,6 +13,8 @@ import Control.Applicative hiding (many)
 
 infixr 5 |||
 
+
+
 {-
 The monad of parsers
 --------------------
@@ -41,10 +43,12 @@ instance Alternative Parser where
    p <|> q = p ||| q
 
 instance MonadPlus Parser where
-   mzero                      =  P (\inp -> [])
+   mzero                      =  P (\inp -> [])  -- Always return failure
    p `mplus` q                =  P (\inp -> case parse p inp of
                                                []        -> parse q inp
                                                [(v,out)] -> [(v,out)])
+
+
 
 {-
 Basic parsers
@@ -62,6 +66,8 @@ item                          =  P (\inp -> case inp of
 parse                         :: Parser a -> String -> [(a,String)]
 parse (P p) inp               =  p inp
 
+
+
 {-
 Choice
 ------
@@ -70,11 +76,14 @@ Choice
 (|||)                         :: Parser a -> Parser a -> Parser a
 p ||| q                       =  p `mplus` q
 
+
+
 {-
 Derived primitives
 ------------------
 -}
 
+{-- Check if a character satisfies a predicate and return a parser --}
 sat                           :: (Char -> Bool) -> Parser Char
 sat p                         =  do x <- item
                                     if p x then return x else failure
@@ -129,6 +138,9 @@ int                           =  do char '-'
 space                         :: Parser ()
 space                         =  do many (sat isSpace)
                                     return ()
+
+
+
 {-
 Ignoring spacing
 ----------------

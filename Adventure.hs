@@ -52,12 +52,12 @@ process :: [String] -> State GameData ReturnValue
 process [cmd, argStr] = case actions cmd of
                           Just fn -> case arguments argStr of
                                       Just arg -> fn arg
-                                      Nothing -> return "I don't understand"
-                          Nothing -> return "I don't understand"
+                                      Nothing -> return "- I don't understand"
+                          Nothing -> return "- I don't understand"
 process [cmd] = case commands cmd of
                   Just fn -> fn
-                  Nothing -> return "I don't understand"
-process _ = return "I don't understand"
+                  Nothing -> return "- I don't understand"
+process _ = return "- I don't understand"
 
 {-- This is the game loop. --}
 repl :: StateT GameData (InputT IO) ()
@@ -69,7 +69,7 @@ repl = do
             --Prompt user for an input
             lift $ outputStrLn ""
             lift $ outputStrLn $ show state ++ "\n"
-            lift $ outputStr "What now? "
+            lift $ outputStr "> What now? "
             mcmd <- lift $ getInputLine ""
             case mcmd of
                 Nothing -> return ()  -- Handle end-of-input (e.g., EOF/Ctrl-D)
@@ -90,7 +90,7 @@ repl = do
                                 lift $ outputStrLn "Game Loaded successfully"
                                 put newState
                                 repl
-                            else do
+                            else do  -- Process the user's input
                                 let (msg, newState) = runState (process (words cmd)) state
                                 lift $ outputStrLn msg
                                 if won newState
