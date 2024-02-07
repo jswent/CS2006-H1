@@ -76,14 +76,6 @@ arguments _           = Nothing
 move :: Direction -> Room -> Maybe RoomID
 move dir rm = fmap room . listToMaybe $ filter (\exit -> exit_dir exit == dir) (exits rm)
 
-                                                 
--- WE NEED TO DECIDE BETWEEN THE ABOVE VERSION AND THE BELOW VERSION OF "move". WHICH IS MORE IDIOMATIC?
--- THE VERSION BELOW DOES USE FILTER, BUT AT THE COST OF READABILITY?
--- move :: Direction -> Room -> Maybe RoomID
--- move dir room | (length $ validExits) /= 0 = Just $ room $ head validExits
---               | otherwise                  = Nothing
---               where validExits = filter (\exit -> exit_dir exit == dir) (exits room)
-
 
 {-- Return True if the object appears in the room. --}
 objectHere :: WorldObject -> Room -> Bool
