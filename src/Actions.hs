@@ -87,7 +87,7 @@ move dir rm = fmap room . listToMaybe $ filter (\exit -> exit_dir exit == dir) (
 
 {-- Return True if the object appears in the room. --}
 objectHere :: WorldObject -> Room -> Bool
-objectHere user_object room = any (\obj -> (obj_name obj) == (obj_name user_object)) (objects room)
+objectHere user_object room = any (\obj -> obj_name obj == obj_name user_object) (objects room)
 
 
 {-- 
@@ -104,7 +104,7 @@ removeObject user_object room = room { objects = filter ((/= obj_name user_objec
 --}
 addObject :: WorldObject -> Room -> Room
 addObject new_object room | objectHere new_object room = room
-                          | otherwise                  = let new_objects = (objects room) ++ [new_object]
+                          | otherwise                  = let new_objects = objects room ++ [new_object]
                                                            in (room {objects = new_objects})
                                                            
 
@@ -274,7 +274,7 @@ pour = do
 drink :: Action
 drink (ObjArg object) = do
     state <- get
-    if carrying mug state && (poured state) && object == mug then do
+    if carrying mug state && poured state && object == mug then do
         -- Player is drinking a coffee
         let newInventory = mug : filter (\obj -> obj_name obj /= Mug) (inventory state)
         put $ state { inventory = newInventory, caffeinated = True, poured = False, drunk = False }
@@ -283,7 +283,7 @@ drink (ObjArg object) = do
         -- Player is drinking
         let newInventory = filter(\obj -> obj_name obj /= Beer) (inventory state)
         put $ state {inventory = newInventory, drunk =  True}
-        return "--- Beer has been drunk and you are now pissed. You must have a coffee again to sober up ---"
+        return "--- Beer has been drunk and you are now intoxicated. You must have a coffee again to sober up ---"
     else
         return "- To drink you must have a full mug of coffee or a beer in your inventory"
 
@@ -298,7 +298,7 @@ drink (ObjArg object) = do
 open :: Command
 open = do
     state <- get
-    if caffeinated state && (location_id state) == Hall then do
+    if caffeinated state && location_id state == Hall then do
         let newHall = hall { room_desc = openedhall, exits = openedexits }
         updateRoom Hall newHall
         return "--- Door has been opened to the street! ---"
@@ -315,7 +315,7 @@ press = do
     let newLounge = lounge {
         room_desc = litloungedesc
     }
-    if (location_id state) == Lounge then do
+    if location_id state == Lounge then do
         put $ state { light = True }
         updateRoom Lounge newLounge
         return "--- Light is switched on. ---"
@@ -330,11 +330,11 @@ shower = do
     let newBathroom = bathroom {
             room_desc = bathroomShoweredDesc
     }
-    if (location_id state) == Bathroom && not (showered state) then do
+    if location_id state == Bathroom && not (showered state) then do
         put $ state { showered = True }
         updateRoom Bathroom newBathroom
         return "--- You took a shower ---"
-    else if (location_id state) == Bathroom && (showered state) then do
+    else if location_id state == Bathroom && showered state then do
         return "- You have already showered this morning"
     else return "- To take a shower you must be in your bathroom"
 
