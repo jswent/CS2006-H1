@@ -283,7 +283,7 @@ drink (ObjArg object) = do
         -- Player is drinking
         let newInventory = filter(\obj -> obj_name obj /= Beer) (inventory state)
         put $ state {inventory = newInventory, drunk =  True}
-        return "Beer has been drunk and you are now pissed. You must have a coffee again to sober up"
+        return "Beer has been drunk and you are now intoxicated. You must have a coffee again to sober up"
     else
         return "To drink you must have a full mug of coffee or a beer in your inventory"
 

@@ -57,7 +57,7 @@ data GameData = GameData { location_id :: RoomID,      -- Where player is
 
 instance Show GameData where
     show game_data
-      | location_id game_data == Street && drunk game_data = "You are drunk, Drink another coffee to sober up"
+      | location_id game_data == Street && drunk game_data = "You are intoxicated, Drink another coffee to sober up"
       | light game_data = show (getRoomData game_data)
       | otherwise       = "The light is off so you cannot see any exits or objects.\n" ++ room_desc (getRoomData game_data)
 
